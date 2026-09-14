@@ -1,7 +1,7 @@
 <div align="center">
   <img src="mediconnect-frontend/src/assets/logo.png" alt="MediConnect Logo" width="100" height="100" />
   <h1>MediConnect</h1>
-  <p><strong>Enterprise-Grade Telehealth & Real-Time Peer-to-Peer Video Consultation Platform</strong></p>
+  <p><strong>Full-stack telehealth platform with role-based access control, WebRTC consultations, Razorpay payments, Cloudinary storage, and Resend transactional email.</strong></p>
 
   <p>
     <a href="https://react.dev/"><img src="https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React 18" /></a>
@@ -79,12 +79,10 @@ flowchart TD
 
 ---
 
----
-
 ## 🛡️ Security & Reliability
 
 * **Secure Authentication**: JWT-based login using secure `HttpOnly` cookies and automatic token refresh.
-* **Reliable Email Delivery**: Uses **Resend HTTP API** with a verified custom domain for 100% delivery.
+* **Reliable Email Delivery**: Uses **Resend HTTP API** with a verified custom domain for transactional email delivery.
 * **Double-Booking Prevention**: Database constraints ensure no slot can ever be booked twice by multiple users.
 * **Role-Based Privacy**: Strict access controls so patients and doctors can only access their own records and visits.
 

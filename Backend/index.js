@@ -27,26 +27,17 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
   "https://mediconnecthealth.me",
   "https://www.mediconnecthealth.me",
+  "https://medi-connect-chi-five.vercel.app",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
 const checkOrigin = (origin, callback) => {
   if (!origin) return callback(null, true);
-  try {
-    const url = new URL(origin);
-    if (
-      allowedOrigins.includes(origin) ||
-      process.env.NODE_ENV !== "production" ||
-      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
-      url.hostname.endsWith(".vercel.app") ||
-      url.hostname === "mediconnecthealth.me" ||
-      url.hostname === "www.mediconnecthealth.me"
-    ) {
-      return callback(null, true);
-    }
-  } catch {
-    // fallback string match
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+  if (
+    allowedOrigins.includes(origin) ||
+    (process.env.NODE_ENV !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
+  ) {
+    return callback(null, true);
   }
   return callback(null, false);
 };
