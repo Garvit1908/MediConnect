@@ -180,7 +180,7 @@ export default function ConsultationRoom() {
         // 2. Connect Socket.IO with credentials support
         const socketTarget =
           import.meta.env.VITE_API_BASE_URL ||
-          (import.meta.env.PROD ? "https://mediconnect-3dki.onrender.com" : window.location.origin);
+          (import.meta.env.PROD ? "https://mediconnect-32xp.onrender.com" : window.location.origin);
         socket = io(socketTarget, {
           withCredentials: true,
           // Authentication is supplied by the HttpOnly access-token cookie.

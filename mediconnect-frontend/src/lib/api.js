@@ -3,7 +3,7 @@
 // which is proxied by Vite dev server.
 const API_HOST =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? "https://mediconnect-3dki.onrender.com" : "");
+  (import.meta.env.PROD ? "https://mediconnect-32xp.onrender.com" : "");
 const BASE = `${API_HOST}/api/v1`;
 
 class ApiError extends Error {
