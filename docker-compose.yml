@@ -1,0 +1,84 @@
+services:
+  # ==========================================
+  # Backend API & Socket.IO Signaling Server
+  # ==========================================
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: mediconnect-backend
+    restart: unless-stopped
+    # Keep the API private; the frontend reverse proxy reaches it over the bridge network.
+    expose:
+      - "4000"
+    env_file:
+      - ./Backend/.env
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mediconnect-net
+
+  # ==========================================
+  # Frontend React SPA + Nginx Reverse Proxy
+  # ==========================================
+  frontend:
+    build:
+      context: ./mediconnect-frontend
+      dockerfile: Dockerfile
+    container_name: mediconnect-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - mediconnect-net
+
+  # ==========================================
+  # Optional: Local MongoDB (Run with: docker compose --profile local-db up)
+  # ==========================================
+  mongo:
+    image: mongo:7.0
+    container_name: mediconnect-mongo
+    restart: unless-stopped
+    profiles:
+      - local-db
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mediconnect-net
+
+  # ==========================================
+  # Optional: Local Redis (Run with: docker compose --profile local-db up)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: mediconnect-redis
+    restart: unless-stopped
+    profiles:
+      - local-db
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mediconnect-net
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  mediconnect-net:
+    driver: bridge

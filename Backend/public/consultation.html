@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediConnect — 1-on-1 Video Consultation</title>
+  <link rel="stylesheet" href="consultation.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="navbar">
+      <div class="brand">
+        <span class="brand-icon">🏥</span>
+        <h1>MediConnect <span>Telehealth</span></h1>
+      </div>
+      <div class="call-badge" id="callStatusBadge">
+        <span class="status-dot disconnected"></span>
+        <span id="statusText">Offline</span>
+      </div>
+    </header>
+
+    <!-- Setup / Join Modal / Overlay -->
+    <div class="setup-overlay" id="setupOverlay">
+      <div class="setup-card">
+        <h2>Join Video Consultation</h2>
+        <p class="setup-subtitle">Enter room ID and your credentials to start encrypted peer-to-peer session</p>
+
+        <div class="form-group">
+          <label for="roomIdInput">Consultation Room ID</label>
+          <input type="text" id="roomIdInput" value="demo_consultation_101" placeholder="e.g. room_65f123abc456" />
+        </div>
+
+        <div class="form-group">
+          <label for="roleSelect">Your Role</label>
+          <select id="roleSelect">
+            <option value="doctor">Doctor (Host)</option>
+            <option value="patient">Patient</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="usernameInput">Display Name</label>
+          <input type="text" id="usernameInput" value="Dr. Sarah Jenkins" placeholder="Your name" />
+        </div>
+
+        <div class="form-group">
+          <label for="jwtTokenInput">JWT Access Token (Optional in Demo Mode)</label>
+          <input type="text" id="jwtTokenInput" placeholder="Paste Bearer JWT or leave empty for demo" />
+        </div>
+
+        <button class="btn btn-primary btn-block" id="joinBtn">
+          <span>🚀 Enter Consultation Room</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Consultation Workspace -->
+    <main class="consultation-layout" id="mainWorkspace" style="display: none;">
+      <!-- Video Stage -->
+      <section class="video-stage">
+        <!-- Remote Video (Big Screen) -->
+        <div class="video-wrapper remote-wrapper">
+          <video id="remoteVideo" autoplay playsinline></video>
+          <div class="video-placeholder" id="remotePlaceholder">
+            <div class="pulse-avatar">👤</div>
+            <p>Waiting for the other participant to join...</p>
+            <span class="badge" id="remoteRoleBadge">Waiting</span>
+          </div>
+          <div class="peer-label" id="remotePeerLabel">Remote Peer</div>
+        </div>
+
+        <!-- Local Video (Picture-in-Picture) -->
+        <div class="video-wrapper local-wrapper">
+          <video id="localVideo" autoplay playsinline muted></video>
+          <div class="peer-label" id="localPeerLabel">You (Local)</div>
+        </div>
+
+        <!-- Control Bar -->
+        <div class="controls-toolbar">
+          <button class="ctrl-btn" id="toggleAudioBtn" title="Mute/Unmute Mic">
+            <span class="icon">🎙️</span>
+            <span class="lbl">Mute</span>
+          </button>
+          <button class="ctrl-btn" id="toggleVideoBtn" title="Turn Camera Off/On">
+            <span class="icon">📹</span>
+            <span class="lbl">Camera</span>
+          </button>
+          <button class="ctrl-btn btn-danger" id="endCallBtn" title="Leave Consultation">
+            <span class="icon">📞</span>
+            <span class="lbl">End Call</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Sidebar: In-Call Chat & Signaling Logs -->
+      <aside class="sidebar">
+        <!-- Tabs -->
+        <div class="sidebar-tabs">
+          <button class="tab-btn active" id="tabChatBtn">💬 Consultation Chat</button>
+          <button class="tab-btn" id="tabLogsBtn">⚡ Signaling Logs</button>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="tab-content" id="chatPanel">
+          <div class="chat-messages" id="chatMessages">
+            <div class="system-message">Consultation session initialized. Messages are end-to-end synchronized.</div>
+          </div>
+          <form class="chat-input-row" id="chatForm">
+            <input type="text" id="chatInput" placeholder="Type a message or clinical note..." autocomplete="off" />
+            <button type="submit" class="btn btn-primary btn-sm">Send</button>
+          </form>
+        </div>
+
+        <!-- Signaling Logs Panel -->
+        <div class="tab-content" id="logsPanel" style="display: none;">
+          <div class="logs-container" id="logsContainer"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Socket.io Client Script -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="consultation.js"></script>
+</body>
+</html>
