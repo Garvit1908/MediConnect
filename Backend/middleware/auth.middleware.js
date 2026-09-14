@@ -64,6 +64,8 @@ exports.requireSameOrigin = (req, res, next) => {
   }
   const configuredOrigins = [
     process.env.CLIENT_URL,
+    "https://mediconnecthealth.me",
+    "https://www.mediconnecthealth.me",
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:4173",
@@ -71,7 +73,23 @@ exports.requireSameOrigin = (req, res, next) => {
     "http://127.0.0.1:3000",
   ].filter(Boolean);
 
-  if (!requestOrigin || !configuredOrigins.includes(requestOrigin)) {
+  let isAllowed = configuredOrigins.includes(requestOrigin);
+  if (!isAllowed && requestOrigin) {
+    try {
+      const parsed = new URL(requestOrigin);
+      if (
+        parsed.hostname.endsWith(".vercel.app") ||
+        parsed.hostname === "mediconnecthealth.me" ||
+        parsed.hostname === "www.mediconnecthealth.me"
+      ) {
+        isAllowed = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!requestOrigin || !isAllowed) {
     return res.status(403).json({ success: false, message: "Cross-site request blocked" });
   }
   next();

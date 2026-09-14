@@ -15,7 +15,7 @@ const app = express();
 const server = http.createServer(app);
 
 // Trust first proxy hop (essential for HTTPS secure cookies behind Nginx / Render / Cloudflare / AWS)
-app.set("trust proxy", process.env.TRUST_PROXY === "true" ? 1 : false);
+app.set("trust proxy", 1);
 
 // Allowed origins for CORS (Development and Production)
 const allowedOrigins = [
@@ -25,17 +25,28 @@ const allowedOrigins = [
   "http://localhost:80",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:3000",
+  "https://mediconnecthealth.me",
+  "https://www.mediconnecthealth.me",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 
 const checkOrigin = (origin, callback) => {
   if (!origin) return callback(null, true);
-  if (
-    allowedOrigins.includes(origin) ||
-    process.env.NODE_ENV !== "production" ||
-    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
-  ) {
-    return callback(null, true);
+  try {
+    const url = new URL(origin);
+    if (
+      allowedOrigins.includes(origin) ||
+      process.env.NODE_ENV !== "production" ||
+      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
+      url.hostname.endsWith(".vercel.app") ||
+      url.hostname === "mediconnecthealth.me" ||
+      url.hostname === "www.mediconnecthealth.me"
+    ) {
+      return callback(null, true);
+    }
+  } catch {
+    // fallback string match
+    if (allowedOrigins.includes(origin)) return callback(null, true);
   }
   return callback(null, false);
 };
