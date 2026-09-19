@@ -89,6 +89,8 @@ export const api = {
   updateDoctorProfile: (payload) => request("/doctors/me", { method: "PUT", body: payload }),
   getDoctors: (queryString) => request(`/doctors${queryString ? `?${queryString}` : ""}`),
   getDoctorById: (id) => request(`/doctors/${id}`),
+  verifyDoctor: (id, isVerified = true) =>
+    request(`/doctors/${id}/verify`, { method: "PATCH", body: { isVerified } }),
 
   // ---- appointments ----
   bookAppointment: (payload) => request("/appointments", { method: "POST", body: payload }),

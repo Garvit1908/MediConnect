@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const { requireSameOrigin } = require("./middleware/auth.middleware");
 const dbconnect = require("./config/db");
 const { cloudinaryConnect } = require("./config/cloudinary");
+const { seedAdmin } = require("./utils/seedAdmin");
 const initSocket = require("./socket");
 
 const app = express();
@@ -151,7 +152,10 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 
 dbconnect()
-  .then(() => {
+  .then(async () => {
+    // 🛡️ Auto-seed primary admin account (johncen.8091@gmail.com)
+    await seedAdmin();
+
     server.listen(PORT, () => {
       console.log(`Server & Sockets are listening at port ${PORT}`);
     });

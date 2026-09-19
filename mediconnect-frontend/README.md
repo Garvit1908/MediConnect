@@ -89,8 +89,10 @@ proxy — but that's a backend change I did not make, per your instructions.)
   availability only; a slot someone else already took will be rejected by
   the backend at submit time with a normal error message, not grayed out
   in advance.
-- **No admin UI.** The `admin` role exists in the User model but no
-  admin-specific routes/screens were requested or implemented.
+- **3-Portal RBAC (Patient, Doctor, Admin):** Full admin console at `/admin`
+  for medical license compliance, verifying/approving doctors, and viewing platform
+  metrics. Configured with primary administrator (`johncen.8091@gmail.com`)
+  with automatic bootstrap seeding on server startup.
 
 ## Structure
 

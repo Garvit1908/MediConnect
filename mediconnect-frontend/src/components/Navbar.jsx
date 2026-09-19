@@ -68,6 +68,16 @@ export default function Navbar() {
             gap: 6,
           }}
         >
+          {user && user.role === "admin" && (
+            <NavLink
+              to="/admin"
+              style={({ isActive }) => (isActive ? activeNavStyle : navStyle)}
+              className="nav-link-item"
+            >
+              🛡️ Admin Portal
+            </NavLink>
+          )}
+
           {user && (
             <NavLink
               to="/doctors"
@@ -78,7 +88,7 @@ export default function Navbar() {
             </NavLink>
           )}
 
-          {user && (
+          {user && user.role !== "admin" && (
             <NavLink
               to="/appointments"
               style={({ isActive }) => (isActive ? activeNavStyle : navStyle)}
@@ -88,7 +98,7 @@ export default function Navbar() {
             </NavLink>
           )}
 
-          {user && (
+          {user && user.role !== "admin" && (
             <NavLink
               to="/prescriptions"
               style={({ isActive }) => (isActive ? activeNavStyle : navStyle)}

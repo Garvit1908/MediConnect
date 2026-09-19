@@ -22,9 +22,17 @@ export default function Login() {
     setError("");
     setBusy(true);
     try {
-      await login({ email, password });
+      const loggedUser = await login({ email, password });
       toast.success("Logged in successfully.");
-      navigate(from, { replace: true });
+      const destination =
+        from !== "/doctors"
+          ? from
+          : loggedUser?.role === "admin"
+          ? "/admin"
+          : loggedUser?.role === "doctor"
+          ? "/appointments"
+          : "/doctors";
+      navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message || "Login failed.");
     } finally {
@@ -45,6 +53,8 @@ export default function Login() {
         const destination =
           from !== "/doctors"
             ? from
+            : res.user?.role === "admin"
+            ? "/admin"
             : res.user?.role === "doctor"
             ? "/appointments"
             : "/doctors";

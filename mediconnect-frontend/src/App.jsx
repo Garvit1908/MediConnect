@@ -15,6 +15,7 @@ import AppointmentDetail from "./pages/AppointmentDetail";
 import ConsultationRoom from "./pages/ConsultationRoom";
 import Prescriptions from "./pages/Prescriptions";
 import MedicalRecords from "./pages/MedicalRecords";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -74,6 +75,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={["patient"]}>
               <MedicalRecords />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <AdminDashboard />
             </ProtectedRoute>
           }
         />

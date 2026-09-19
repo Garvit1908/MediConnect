@@ -21,6 +21,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "seed:admin": "node scripts/seedAdmin.js",
     "test": "node --check index.js"
   }
 }

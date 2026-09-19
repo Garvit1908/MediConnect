@@ -20,6 +20,24 @@ export default function DoctorDetail() {
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState("");
   const [imgError, setImgError] = useState(false);
+  const [adminBusy, setAdminBusy] = useState(false);
+
+  const handleAdminToggleVerify = async (newStatus) => {
+    setAdminBusy(true);
+    try {
+      const res = await api.verifyDoctor(doctor._id, newStatus);
+      setDoctor((prev) => ({ ...prev, isVerified: res.data.isVerified }));
+      if (newStatus) {
+        toast.success(`Dr. ${doctor.userId?.username || "Doctor"} is now verified! Patients can book.`);
+      } else {
+        toast.info(`Dr. ${doctor.userId?.username || "Doctor"} verification revoked.`);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to update verification.");
+    } finally {
+      setAdminBusy(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -477,6 +495,73 @@ export default function DoctorDetail() {
 
           {user && user.role === "doctor" && (
             <div className="alert alert-info" style={{ marginBottom: 16 }}>Doctor accounts cannot book appointments.</div>
+          )}
+
+          {user && user.role === "admin" && (
+            <div
+              className="card card-pad"
+              style={{
+                background: "#F0FDF4",
+                borderColor: "#BBF7D0",
+                borderRadius: 12,
+                marginBottom: 20,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 16 }}>🛡️</span>
+                <strong style={{ fontSize: 14, color: "#166534" }}>Admin Management Console</strong>
+              </div>
+              <p style={{ fontSize: 13, color: "#374151", margin: "0 0 14px" }}>
+                Current status:{" "}
+                <strong>{doctor.isVerified ? "Verified Practitioner ✅" : "Under Verification ⏳"}</strong>
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {doctor.isVerified ? (
+                  <button
+                    type="button"
+                    disabled={adminBusy}
+                    onClick={() => handleAdminToggleVerify(false)}
+                    className="btn"
+                    style={{
+                      background: "#FEF2F2",
+                      color: "#DC2626",
+                      border: "1px solid #FECACA",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                    }}
+                  >
+                    {adminBusy ? "Updating…" : "Revoke Verification"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={adminBusy}
+                    onClick={() => handleAdminToggleVerify(true)}
+                    className="btn"
+                    style={{
+                      background: "#059669",
+                      color: "#FFFFFF",
+                      border: "none",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      padding: "8px 16px",
+                      borderRadius: 8,
+                    }}
+                  >
+                    {adminBusy ? "Verifying…" : "✓ Approve & Verify Doctor"}
+                  </button>
+                )}
+                <Link
+                  to="/admin"
+                  className="btn btn-secondary"
+                  style={{ fontSize: 13, padding: "8px 14px", textDecoration: "none" }}
+                >
+                  Go to Admin Portal
+                </Link>
+              </div>
+            </div>
           )}
 
           {user && user.role === "patient" && !hasProfile && (
