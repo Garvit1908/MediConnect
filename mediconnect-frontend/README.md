@@ -91,7 +91,7 @@ proxy — but that's a backend change I did not make, per your instructions.)
   in advance.
 - **3-Portal RBAC (Patient, Doctor, Admin):** Full admin console at `/admin`
   for medical license compliance, verifying/approving doctors, and viewing platform
-  metrics. Configured with primary administrator (`johncen.8091@gmail.com`)
+  metrics. Configured with primary administrator via environment variables
   with automatic bootstrap seeding on server startup.
 
 ## Structure

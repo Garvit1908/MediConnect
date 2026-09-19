@@ -16,17 +16,15 @@ const getGoogleOAuthClient = () => {
       const { OAuth2Client } = require("google-auth-library");
       googleOAuthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
     } catch {
-      // Optional if library is not yet installed
+
     }
   }
   return googleOAuthClient;
 };
 
-// Resilient verification: Uses google-auth-library locally or Google's tokeninfo API fallback
 const verifyGoogleIdToken = async (credential) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
 
-  // 1. Try google-auth-library if present
   const client = getGoogleOAuthClient();
   if (client) {
     try {
@@ -41,7 +39,6 @@ const verifyGoogleIdToken = async (credential) => {
     }
   }
 
-  // 2. Official Google tokeninfo HTTP endpoint fallback
   const res = await fetch(
     `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
   );
@@ -58,21 +55,16 @@ const verifyGoogleIdToken = async (credential) => {
   return payload;
 };
 
-// Expiry durations in milliseconds
-const ACCESS_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day
-const REFRESH_TOKEN_EXPIRY_MS = 15 * 24 * 60 * 60 * 1000; // 15 days
+const ACCESS_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+const REFRESH_TOKEN_EXPIRY_MS = 15 * 24 * 60 * 60 * 1000;
 
-// Cookie options for tokens
 const isProduction = process.env.NODE_ENV === "production";
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction, // false in development (HTTP), true in production (HTTPS)
+  secure: isProduction,
   sameSite: isProduction ? "none" : (process.env.COOKIE_SAMESITE || "lax"),
 };
 
-// ==========================================
-// 1. SEND OTP CONTROLLER
-// ==========================================
 exports.sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -84,7 +76,6 @@ exports.sendOTP = async (req, res) => {
       });
     }
 
-    // 1. Check if user is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -93,21 +84,17 @@ exports.sendOTP = async (req, res) => {
       });
     }
 
-    // 2. Generate 6-digit numeric plain OTP
     const plainOtp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     });
 
-    // 3. Send plain OTP email FIRST (Guarantees user receives readable code)
     const emailBody = getOTPEmailTemplate(plainOtp);
     await mailsender(email, "Verification OTP - MediConnect", emailBody);
 
-    // 4. Hash the OTP explicitly before database persistence
     const hashedOtp = await bcrypt.hash(plainOtp, 10);
 
-    // 5. Store ONLY hashed OTP in MongoDB
     await OTP.create({
       email,
       otp: hashedOtp,
@@ -127,14 +114,10 @@ exports.sendOTP = async (req, res) => {
   }
 };
 
-// ==========================================
-// 2. SIGNUP CONTROLLER
-// ==========================================
 exports.signup = async (req, res) => {
   try {
     const { email, password, username, otp, role } = req.body;
 
-    // 1. Validate required fields
     if (!email || !password || !username || !otp || !role) {
       return res.status(400).json({
         success: false,
@@ -142,12 +125,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 2. Prevent Privilege Escalation (Only patient or doctor allowed at public signup)
-    // NOTE: How Admin accounts are created in production:
-    //  - Option A: Via DB Seeder script (e.g. scripts/seedAdmin.js) executed directly on server.
-    //  - Option B: Directly from MongoDB Atlas / Compass by updating user's role to 'admin'.
-    //  - Option C: Via a protected internal route protected by an ADMIN_SECRET_KEY / Super-Admin invite.
-    // Public signup is strictly blocked for 'admin' to prevent unauthorized root access.
     if (role !== "patient" && role !== "doctor") {
       return res.status(400).json({
         success: false,
@@ -155,7 +132,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 3. Check if user already exists with email or username
     const isUserExists = await User.findOne({ email });
     if (isUserExists) {
       return res.status(400).json({
@@ -164,7 +140,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 4. Find most recent OTP
     const recentOtp = await OTP.find({ email })
       .select("+otp")
       .sort({ createdAt: -1 })
@@ -177,7 +152,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 5. Explicit in-memory expiration check (Guarantees exact 5-minute limit)
     const isExpired =
       Date.now() - new Date(recentOtp[0].createdAt).getTime() > 5 * 60 * 1000;
     if (isExpired) {
@@ -187,7 +161,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 6. Compare plain OTP with hashed OTP from DB using bcrypt
     const isOtpValid = await bcrypt.compare(String(otp), recentOtp[0].otp);
     if (!isOtpValid) {
       return res.status(400).json({
@@ -196,7 +169,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 7. Create User (password hashing is handled by User pre-save hook)
     const user = await User.create({
       username,
       email,
@@ -204,10 +176,8 @@ exports.signup = async (req, res) => {
       role,
     });
 
-    // 8. Delete ALL OTPs for this email (Replay attack & Dangling Token protection)
     await OTP.deleteMany({ email });
 
-    // 9. Generate Access & Refresh Tokens for instant seamless onboarding
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
@@ -215,16 +185,15 @@ exports.signup = async (req, res) => {
     user.refreshtokenexpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS);
     await user.save({ validateBeforeSave: false });
 
-    // 10. Return response with auth cookies
     return res
       .status(201)
       .cookie("accessToken", accessToken, {
         ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .cookie("refreshToken", refreshToken, {
         ...cookieOptions,
-        maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+        maxAge: 15 * 24 * 60 * 60 * 1000,
       })
       .json({
         success: true,
@@ -246,14 +215,10 @@ exports.signup = async (req, res) => {
   }
 };
 
-// ==========================================
-// 3. LOGIN CONTROLLER
-// ==========================================
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Validate inputs (email and password required)
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -261,7 +226,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 2. Find user directly by email (username is non-unique, login is strictly email-based)
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -271,7 +235,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 3. Verify password
     const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -280,25 +243,22 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 4. Generate Access & Refresh Tokens
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    // 5. Store Refresh Token & Expiry in MongoDB
     user.refreshtoken = await bcrypt.hash(refreshToken, 10);
     user.refreshtokenexpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS);
     await user.save({ validateBeforeSave: false });
 
-    // 6. Set tokens in Cookies & send response
     return res
       .status(200)
       .cookie("accessToken", accessToken, {
         ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .cookie("refreshToken", refreshToken, {
         ...cookieOptions,
-        maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+        maxAge: 15 * 24 * 60 * 60 * 1000,
       })
       .json({
         success: true,
@@ -322,14 +282,10 @@ exports.login = async (req, res) => {
   }
 };
 
-// ==========================================
-// 4. LOGOUT CONTROLLER
-// ==========================================
 exports.logout = async (req, res) => {
   try {
     let userId = req.user?._id;
 
-    // If req.user is not set by middleware, try decoding the refresh token from cookies
     if (!userId) {
       const incomingRefreshToken =
         req.cookies?.refreshToken || req.body?.refreshToken;
@@ -341,12 +297,11 @@ exports.logout = async (req, res) => {
           );
           userId = decoded?._id;
         } catch (ignored) {
-          // Token expired or invalid, proceed to clear cookies
+
         }
       }
     }
 
-    // Clear refresh token in database if user is identified
     if (userId) {
       await User.findByIdAndUpdate(
         userId,
@@ -360,7 +315,6 @@ exports.logout = async (req, res) => {
       );
     }
 
-    // Clear cookies using the exact same cookieOptions
     return res
       .status(200)
       .clearCookie("accessToken", cookieOptions)
@@ -379,9 +333,6 @@ exports.logout = async (req, res) => {
   }
 };
 
-// ==========================================
-// 5. REFRESH ACCESS TOKEN CONTROLLER
-// ==========================================
 exports.refreshAccessToken = async (req, res) => {
   try {
     const incomingRefreshToken =
@@ -394,13 +345,11 @@ exports.refreshAccessToken = async (req, res) => {
       });
     }
 
-    // 1. Verify refresh token signature & expiration
     const decoded = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
 
-    // 2. Find user by decoded ID (explicitly select +refreshtoken +refreshtokenexpiry because select: false)
     const user = await User.findById(decoded?._id).select("+refreshtoken +refreshtokenexpiry");
     if (!user || !user.refreshtoken) {
       return res.status(401).json({
@@ -409,7 +358,6 @@ exports.refreshAccessToken = async (req, res) => {
       });
     }
 
-    // Check DB-level token expiry
     if (user.refreshtokenexpiry && user.refreshtokenexpiry < new Date()) {
       user.refreshtoken = undefined;
       user.refreshtokenexpiry = undefined;
@@ -420,7 +368,6 @@ exports.refreshAccessToken = async (req, res) => {
       });
     }
 
-    // 3. Compare incoming plain refresh token with hashed refresh token in DB
     const isTokenMatch = await bcrypt.compare(
       incomingRefreshToken,
       user.refreshtoken
@@ -433,25 +380,22 @@ exports.refreshAccessToken = async (req, res) => {
       });
     }
 
-    // 4. Generate new Access and Refresh tokens (Token Rotation)
     const newAccessToken = user.generateAccessToken();
     const newRefreshToken = user.generateRefreshToken();
 
-    // 5. Store new hashed Refresh Token & Expiry in MongoDB (Token Rotation)
     user.refreshtoken = await bcrypt.hash(newRefreshToken, 10);
     user.refreshtokenexpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS);
     await user.save({ validateBeforeSave: false });
 
-    // 6. Set new cookies and send success response
     return res
       .status(200)
       .cookie("accessToken", newAccessToken, {
         ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        maxAge: 24 * 60 * 60 * 1000,
       })
       .cookie("refreshToken", newRefreshToken, {
         ...cookieOptions,
-        maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+        maxAge: 15 * 24 * 60 * 60 * 1000,
       })
       .json({
         success: true,
@@ -467,9 +411,6 @@ exports.refreshAccessToken = async (req, res) => {
   }
 };
 
-// ==========================================
-// 6. UPDATE PROFILE PICTURE (Cloudinary Upload)
-// ==========================================
 exports.updateProfilePicture = async (req, res) => {
   let uploadResult = null;
 
@@ -489,10 +430,8 @@ exports.updateProfilePicture = async (req, res) => {
       });
     }
 
-    // 1. Capture old publicId to clean up previous avatar
     const oldPublicId = user.profilePicPublicId || getPublicIdFromUrl(user.profilePicUrl);
 
-    // 2. Stream upload directly to Cloudinary folder "mediconnect/avatars"
     uploadResult = await uploadStreamToCloudinary(
       req.file.buffer,
       "mediconnect/avatars",
@@ -504,12 +443,10 @@ exports.updateProfilePicture = async (req, res) => {
       }
     );
 
-    // 3. Update DB with new avatar and publicId
     user.profilePicUrl = uploadResult.secure_url;
     user.profilePicPublicId = uploadResult.public_id;
     await user.save({ validateBeforeSave: false });
 
-    // 4. Delete old avatar from Cloudinary if existed
     if (oldPublicId) {
       deleteFromCloudinary(oldPublicId, "image");
     }
@@ -528,7 +465,7 @@ exports.updateProfilePicture = async (req, res) => {
       },
     });
   } catch (err) {
-    // Rollback: Delete orphaned avatar from Cloudinary if user.save() fails
+
     if (uploadResult?.public_id) {
       await deleteFromCloudinary(uploadResult.public_id, "image");
     }
@@ -542,9 +479,6 @@ exports.updateProfilePicture = async (req, res) => {
   }
 };
 
-// ==========================================
-// 7. FORGOT PASSWORD OTP CONTROLLER
-// ==========================================
 exports.forgotPasswordOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -556,7 +490,6 @@ exports.forgotPasswordOTP = async (req, res) => {
       });
     }
 
-    // 1. Verify user exists in database
     const existingUser = await User.findOne({ email });
     if (!existingUser) {
       return res.status(404).json({
@@ -565,21 +498,17 @@ exports.forgotPasswordOTP = async (req, res) => {
       });
     }
 
-    // 2. Generate 6-digit numeric OTP
     const plainOtp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     });
 
-    // 3. Send Password Reset OTP Email
     const emailBody = getPasswordResetEmailTemplate(plainOtp);
     await mailsender(email, "Password Reset Code - MediConnect", emailBody);
 
-    // 4. Hash the OTP explicitly before database persistence
     const hashedOtp = await bcrypt.hash(plainOtp, 10);
 
-    // 5. Store hashed OTP in MongoDB
     await OTP.create({
       email,
       otp: hashedOtp,
@@ -599,14 +528,10 @@ exports.forgotPasswordOTP = async (req, res) => {
   }
 };
 
-// ==========================================
-// 8. RESET PASSWORD CONTROLLER
-// ==========================================
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword, confirmPassword } = req.body;
 
-    // 1. Validate inputs
     if (!email || !otp || !newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -614,7 +539,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 2. Check password matching and length
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
         success: false,
@@ -629,7 +553,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 3. Verify user exists
     const user = await User.findOne({ email }).select("+password +refreshtoken +refreshtokenexpiry");
     if (!user) {
       return res.status(404).json({
@@ -638,7 +561,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 4. Find most recent OTP for this email
     const recentOtp = await OTP.find({ email })
       .select("+otp")
       .sort({ createdAt: -1 })
@@ -651,7 +573,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 5. Check in-memory 5-minute expiry
     const isExpired =
       Date.now() - new Date(recentOtp[0].createdAt).getTime() > 5 * 60 * 1000;
     if (isExpired) {
@@ -661,7 +582,6 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 6. Verify OTP with bcrypt
     const isOtpValid = await bcrypt.compare(String(otp), recentOtp[0].otp);
     if (!isOtpValid) {
       return res.status(400).json({
@@ -670,16 +590,13 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // 7. Update Password (pre-save hook will hash it)
     user.password = newPassword;
 
-    // Invalidate existing sessions across all devices for security
     user.refreshtoken = undefined;
     user.refreshtokenexpiry = undefined;
 
     await user.save();
 
-    // 8. Delete all OTPs for this email to prevent replay attacks
     await OTP.deleteMany({ email });
 
     return res.status(200).json({
@@ -696,9 +613,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// ==========================================
-// 9. GOOGLE OAUTH CONTROLLER
-// ==========================================
 exports.googleAuth = async (req, res) => {
   try {
     const { credential, role } = req.body;
@@ -710,7 +624,6 @@ exports.googleAuth = async (req, res) => {
       });
     }
 
-    // Verify token with Google
     let payload;
     try {
       payload = await verifyGoogleIdToken(credential);
@@ -733,7 +646,6 @@ exports.googleAuth = async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // 1. Find user by googleId or email
     let user = await User.findOne({
       $or: [{ googleId }, { email: normalizedEmail }],
     });
@@ -741,17 +653,15 @@ exports.googleAuth = async (req, res) => {
     let isNewUser = false;
 
     if (!user) {
-      // Prevent privilege escalation: only patient or doctor allowed
+
       const assignedRole = role === "doctor" ? "doctor" : "patient";
 
-      // Sanitize username: alphanumeric and underscores only
       let baseUsername = (name || normalizedEmail.split("@")[0])
         .replace(/[^a-zA-Z0-9_]/g, "_")
         .toLowerCase()
         .slice(0, 25);
       if (!baseUsername) baseUsername = "user";
 
-      // Ensure username uniqueness
       let username = baseUsername;
       let counter = 1;
       while (await User.exists({ username })) {
@@ -770,7 +680,7 @@ exports.googleAuth = async (req, res) => {
 
       isNewUser = true;
     } else {
-      // Existing user: link Google ID if not yet linked
+
       let shouldSave = false;
       if (!user.googleId) {
         user.googleId = googleId;
@@ -785,7 +695,6 @@ exports.googleAuth = async (req, res) => {
       }
     }
 
-    // Check if user has completed mandatory profile setup
     let hasProfile = false;
     if (user.role === "patient") {
       hasProfile = Boolean(await Patient.exists({ userId: user._id }));
@@ -795,16 +704,13 @@ exports.googleAuth = async (req, res) => {
       hasProfile = true;
     }
 
-    // Generate JWT Access & Refresh tokens
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    // Store hashed Refresh Token & Expiry
     user.refreshtoken = await bcrypt.hash(refreshToken, 10);
     user.refreshtokenexpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS);
     await user.save({ validateBeforeSave: false });
 
-    // Set tokens in Cookies & send response
     return res
       .status(200)
       .cookie("accessToken", accessToken, {

@@ -29,7 +29,7 @@ export default function Doctors() {
 
   useEffect(() => {
     fetchDoctors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const handleFilter = (e) => {

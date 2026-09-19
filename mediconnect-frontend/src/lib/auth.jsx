@@ -38,7 +38,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      // 1. Immediately cut all camera & microphone hardware streams
+
       document.querySelectorAll("video, audio").forEach((el) => {
         if (el.srcObject && typeof el.srcObject.getTracks === "function") {
           el.srcObject.getTracks().forEach((track) => {

@@ -5,7 +5,6 @@ const Doctor = require("../models/doctor.model");
 const Appointment = require("../models/appointment.model");
 const { uploadStreamToCloudinary, deleteFromCloudinary } = require("../utils/cloudinary");
 
-// 1. Upload Medical Record (Patient Only)
 exports.uploadMedicalRecord = async (req, res) => {
   let uploadResult = null;
   let resourceType = "image";
@@ -27,7 +26,6 @@ exports.uploadMedicalRecord = async (req, res) => {
       });
     }
 
-    // Validate recordType if provided
     const allowedRecordTypes = [
       "lab_report",
       "x_ray",
@@ -43,7 +41,6 @@ exports.uploadMedicalRecord = async (req, res) => {
       });
     }
 
-    // Find logged-in patient profile
     const patient = await Patient.findOne({ userId: req.user._id });
     if (!patient) {
       return res.status(404).json({
@@ -52,7 +49,6 @@ exports.uploadMedicalRecord = async (req, res) => {
       });
     }
 
-    // Optional appointment validation & ownership check
     if (appointmentId) {
       if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
         return res.status(400).json({
@@ -67,7 +63,7 @@ exports.uploadMedicalRecord = async (req, res) => {
           message: "Associated appointment not found",
         });
       }
-      // Ownership check: Appointment must belong to this patient
+
       if (existingAppointment.patientId.toString() !== patient._id.toString()) {
         return res.status(403).json({
           success: false,
@@ -76,11 +72,9 @@ exports.uploadMedicalRecord = async (req, res) => {
       }
     }
 
-    // Determine file type
     const isPdf = req.file.mimetype === "application/pdf";
     resourceType = isPdf ? "raw" : "image";
 
-    // Upload directly to Cloudinary
     uploadResult = await uploadStreamToCloudinary(
       req.file.buffer,
       "mediconnect/medical-records",
@@ -107,7 +101,7 @@ exports.uploadMedicalRecord = async (req, res) => {
       data: newRecord,
     });
   } catch (err) {
-    // Rollback: Delete orphaned file from Cloudinary if MongoDB operation fails
+
     if (uploadResult?.public_id) {
       await deleteFromCloudinary(uploadResult.public_id, resourceType);
     }
@@ -121,7 +115,6 @@ exports.uploadMedicalRecord = async (req, res) => {
   }
 };
 
-// 2. Get My Medical Records (Patient Only)
 exports.getMyMedicalRecords = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user._id });
@@ -150,7 +143,6 @@ exports.getMyMedicalRecords = async (req, res) => {
   }
 };
 
-// 3. Get Specific Medical Record By ID (Owner Patient, Authorized Doctor, or Admin)
 exports.getMedicalRecordById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -174,7 +166,6 @@ exports.getMedicalRecordById = async (req, res) => {
       });
     }
 
-    // Ownership & Clinical Authorization Guard
     if (req.user.role === "patient") {
       const patient = await Patient.findOne({ userId: req.user._id });
       if (!patient || record.patientId.toString() !== patient._id.toString()) {
@@ -192,7 +183,6 @@ exports.getMedicalRecordById = async (req, res) => {
         });
       }
 
-      // Doctor must have an appointment with this patient to access their records
       const hasAppointment = await Appointment.findOne({
         doctorId: doctor._id,
         patientId: record.patientId,
@@ -220,7 +210,6 @@ exports.getMedicalRecordById = async (req, res) => {
   }
 };
 
-// 4. Get Patient's Medical Records by Patient ID (Doctor with active appointment & Admin)
 exports.getPatientMedicalRecords = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -240,9 +229,6 @@ exports.getPatientMedicalRecords = async (req, res) => {
       });
     }
 
-    // Doctor Clinical Privacy Guard:
-    // Any random doctor CANNOT view any random patient's records.
-    // Doctor MUST have at least one active (non-cancelled) appointment with this patient.
     if (req.user.role === "doctor") {
       const doctor = await Doctor.findOne({ userId: req.user._id });
       if (!doctor) {
@@ -284,7 +270,6 @@ exports.getPatientMedicalRecords = async (req, res) => {
   }
 };
 
-// 5. Delete Medical Record (Patient Only - Deletes DB record + Cloudinary asset)
 exports.deleteMedicalRecord = async (req, res) => {
   try {
     const { id } = req.params;
@@ -304,7 +289,6 @@ exports.deleteMedicalRecord = async (req, res) => {
       });
     }
 
-    // Ownership check: Only the patient who owns this record (or admin) can delete it
     if (req.user.role === "patient") {
       const patient = await Patient.findOne({ userId: req.user._id });
       if (!patient || record.patientId.toString() !== patient._id.toString()) {
@@ -315,11 +299,9 @@ exports.deleteMedicalRecord = async (req, res) => {
       }
     }
 
-    // Delete asset from Cloudinary
     const cloudinaryResourceType = record.fileType === "pdf" ? "raw" : "image";
     await deleteFromCloudinary(record.publicId, cloudinaryResourceType);
 
-    // Delete document from MongoDB
     await MedicalRecord.findByIdAndDelete(id);
 
     return res.status(200).json({

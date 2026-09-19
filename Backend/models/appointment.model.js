@@ -27,16 +27,15 @@ const appointmentSchema = new mongoose.Schema(
     },
     consultationFee: {
       type: Number,
-      required: true, // Snapshot of doctor's fee at booking time
+      required: true,
     },
     roomId: {
-      type: String, // WebRTC room identifier
+      type: String,
     },
   },
   { timestamps: true }
 );
 
-// Prevent double-booking: guarantees at DB level that 2 patients cannot book the same doctor slot unless cancelled
 appointmentSchema.index(
   { doctorId: 1, slotDate: 1, slotTime: 1 },
   { unique: true, partialFilterExpression: { status: { $ne: "cancelled" } } }

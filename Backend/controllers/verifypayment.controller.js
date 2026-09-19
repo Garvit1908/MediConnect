@@ -6,9 +6,6 @@ const Patient = require("../models/patient.model");
 const mailsender = require("../utils/mailsender");
 const { getPaymentSuccessEmailTemplate } = require("../utils/emailTemplates");
 
-// ==========================================
-// VERIFY RAZORPAY PAYMENT (Patient Only)
-// ==========================================
 exports.verifyPayment = async (req, res) => {
   try {
     const {
@@ -18,7 +15,6 @@ exports.verifyPayment = async (req, res) => {
       appointmentId,
     } = req.body;
 
-    // 0. Secret Key Guard
     if (!process.env.RAZORPAY_KEY_SECRET) {
       return res.status(500).json({
         success: false,
@@ -26,7 +22,6 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 1. Validate required fields
     if (
       !razorpay_order_id ||
       !razorpay_payment_id ||
@@ -46,7 +41,6 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 2. Logged-in Patient profile fetch
     const patient = await Patient.findOne({ userId: req.user._id });
     if (!patient) {
       return res.status(404).json({
@@ -55,7 +49,6 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 3. Appointment fetch & Ownership check
     const appointmentDoc = await Appointment.findById(appointmentId);
     if (!appointmentDoc) {
       return res.status(404).json({
@@ -71,8 +64,6 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 4. CRITICAL SECURITY: Order-to-Appointment & Patient Binding Check
-    // Verifies that razorpayOrderId strictly belongs to THIS appointment and THIS patient!
     const paymentRecord = await Payment.findOne({
       razorpayOrderId: razorpay_order_id,
       appointmentId: appointmentDoc._id,
@@ -86,7 +77,6 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 5. Idempotency Guard: Agar payment already completed hai, duplicate processing skip karo
     if (paymentRecord.status === "completed") {
       return res.status(200).json({
         success: true,
@@ -98,14 +88,12 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 6. Generate Expected HMAC SHA256 Signature
     const dataToSign = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(dataToSign.toString())
       .digest("hex");
 
-    // 7. Timing-safe Signature Comparison (Prevents timing attacks)
     const isAuthentic =
       expectedSignature.length === razorpay_signature.length &&
       crypto.timingSafeEqual(
@@ -113,7 +101,6 @@ exports.verifyPayment = async (req, res) => {
         Buffer.from(razorpay_signature)
       );
 
-    // 8. Signature FAILED
     if (!isAuthentic) {
       paymentRecord.razorpayPaymentId = razorpay_payment_id;
       paymentRecord.razorpaySignature = razorpay_signature;
@@ -126,17 +113,14 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
-    // 9. Signature SUCCESS: Mark Payment as 'completed'
     paymentRecord.razorpayPaymentId = razorpay_payment_id;
     paymentRecord.razorpaySignature = razorpay_signature;
     paymentRecord.status = "completed";
     const updatedPayment = await paymentRecord.save();
 
-    // 10. Auto-confirm the Appointment
     appointmentDoc.status = "confirmed";
     const updatedAppointment = await appointmentDoc.save();
 
-    // 11. Send Confirmation Email to Patient
     try {
       const fullAppointment = await Appointment.findById(appointmentDoc._id).populate({
         path: "doctorId",
@@ -176,7 +160,7 @@ exports.verifyPayment = async (req, res) => {
       );
       console.log(`Payment confirmation email sent to ${req.user.email}`);
     } catch (mailErr) {
-      // Non-fatal error: don't break response if email delivery fails
+
       console.error("Non-fatal error sending payment confirmation email:", mailErr.message);
     }
 
@@ -198,9 +182,6 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
-// ==========================================
-// GET MY PAYMENTS / RECEIPTS (Patient Only)
-// ==========================================
 exports.getMyPayments = async (req, res) => {
   try {
     const patient = await Patient.findOne({ userId: req.user._id });
@@ -241,4 +222,3 @@ exports.getMyPayments = async (req, res) => {
     });
   }
 };
-

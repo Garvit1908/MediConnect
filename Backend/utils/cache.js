@@ -1,17 +1,7 @@
 const { redisClient, isReady } = require("../config/redis");
 
-/**
- * Cache-Aside Helper:
- * Attempts to fetch data from Redis. If missing or if Redis is offline,
- * runs the fallback fetchFn(), caches the result in Redis, and returns it.
- *
- * @param {string} key - Redis key (e.g., 'doctors:list:...')
- * @param {number} ttlSeconds - Time-To-Live in seconds (e.g., 600 for 10 minutes)
- * @param {Function} fetchFn - Async function returning fresh MongoDB data on cache miss
- * @returns {Promise<any>}
- */
 exports.getOrSetCache = async (key, ttlSeconds, fetchFn) => {
-  // 1. Try fetching from Redis cache if available
+
   if (isReady()) {
     try {
       const cached = await redisClient.get(key);
@@ -23,10 +13,8 @@ exports.getOrSetCache = async (key, ttlSeconds, fetchFn) => {
     }
   }
 
-  // 2. Cache miss or Redis offline: Fetch fresh data from MongoDB
   const freshData = await fetchFn();
 
-  // 3. Store fresh data in Redis with TTL for future requests
   if (freshData !== undefined && freshData !== null && isReady()) {
     try {
       await redisClient.setex(key, ttlSeconds, JSON.stringify(freshData));
@@ -38,10 +26,6 @@ exports.getOrSetCache = async (key, ttlSeconds, fetchFn) => {
   return freshData;
 };
 
-/**
- * Delete a specific key from Redis
- * @param {string} key
- */
 exports.deleteCache = async (key) => {
   if (!isReady() || !key) return;
   try {
@@ -51,10 +35,6 @@ exports.deleteCache = async (key) => {
   }
 };
 
-/**
- * Non-blocking pattern invalidation using Redis SCAN stream (safe for production)
- * @param {string} pattern - Key pattern to delete (e.g., 'doctors:*')
- */
 exports.invalidateCachePattern = async (pattern) => {
   if (!isReady() || !pattern) return;
 

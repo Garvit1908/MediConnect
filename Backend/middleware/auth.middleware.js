@@ -1,4 +1,3 @@
-// middleware/auth.middleware.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
@@ -17,7 +16,7 @@ exports.protect = async (req, res, next) => {
       return res.status(401).json({ success: false, message: "User not found" });
     }
 
-    req.user = user; // ab har protected route mein req.user available hai
+    req.user = user;
     next();
   } catch (err) {
     return res.status(401).json({ success: false, message: "Invalid or expired token" });
@@ -26,7 +25,7 @@ exports.protect = async (req, res, next) => {
 
 exports.authorize = (...allowedRoles) => {
   return (req, res, next) => {
-    // Guard clause: agar req.user hi nahi hai (matlab protect nahi chala ya fail ho gaya)
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -45,8 +44,6 @@ exports.authorize = (...allowedRoles) => {
   };
 };
 
-// Cookie-authenticated state changes must come from the configured application.
-// Bearer-token clients remain usable for non-browser integrations.
 exports.requireSameOrigin = (req, res, next) => {
   if (!["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) return next();
   const hasCookieAuth = Boolean(req.cookies?.accessToken || req.cookies?.refreshToken);

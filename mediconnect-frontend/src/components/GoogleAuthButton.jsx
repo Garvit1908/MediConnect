@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useToast } from "../lib/toast";
 
 export default function GoogleAuthButton({
-  text = "continue_with", // "continue_with" | "signin_with" | "signup_with"
+  text = "continue_with",
   onSuccess,
   onError,
   disabled = false,
@@ -14,7 +14,6 @@ export default function GoogleAuthButton({
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  // Check and wait for Google Identity Services script to be available on window
   useEffect(() => {
     if (!clientId) return;
 
@@ -40,7 +39,6 @@ export default function GoogleAuthButton({
     };
   }, [clientId]);
 
-  // Initialize and render official Google Identity Services button
   useEffect(() => {
     if (!clientId || !isGsiLoaded || !containerRef.current) return;
 
@@ -58,7 +56,6 @@ export default function GoogleAuthButton({
         },
       });
 
-      // Clear any previous rendered child
       containerRef.current.innerHTML = "";
 
       window.google.accounts.id.renderButton(containerRef.current, {
@@ -84,7 +81,6 @@ export default function GoogleAuthButton({
     }
   };
 
-  // If clientId is present and GSI is loading/loaded, render container for Google's official iframe
   if (clientId) {
     return (
       <div
@@ -102,7 +98,6 @@ export default function GoogleAuthButton({
     );
   }
 
-  // Fallback when VITE_GOOGLE_CLIENT_ID is not yet configured in .env
   return (
     <div className="google-auth-wrapper" style={{ width: "100%" }}>
       <button

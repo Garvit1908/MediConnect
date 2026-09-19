@@ -3,7 +3,6 @@ const Doctor = require("../models/doctor.model");
 const Patient = require("../models/patient.model");
 const mongoose = require("mongoose");
 
-// ---------- Helpers ----------
 const isValidDate = (date) => !isNaN(new Date(date).getTime());
 
 const isPastDate = (date) => {
@@ -61,7 +60,6 @@ const isAuthorizedForAppointment = async (appointmentDoc, userId, userRole) => {
   return false;
 };
 
-// ---------- 1. Book Appointment ----------
 exports.bookappointment = async (req, res) => {
   try {
     const { doctorId, slotDate, slotTime } = req.body;
@@ -98,8 +96,6 @@ exports.bookappointment = async (req, res) => {
       return res.status(400).json({ success: false, message: scheduleCheck.message });
     }
 
-    // No manual duplicate-check needed — the unique partial index + catch(11000) below
-    // handles this atomically and is race-condition-proof (a manual findOne isn't).
     const newAppointment = await appointment.create({
       patientId: patient._id,
       doctorId: doctor._id,
@@ -122,7 +118,6 @@ exports.bookappointment = async (req, res) => {
   }
 };
 
-// ---------- 2. Get My Appointments ----------
 exports.getmyappointment = async (req, res) => {
   try {
     let filter = {};
@@ -149,7 +144,6 @@ exports.getmyappointment = async (req, res) => {
   }
 };
 
-// ---------- 3. Get Appointment By ID ----------
 exports.getAppointmentById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,7 +172,6 @@ exports.getAppointmentById = async (req, res) => {
   }
 };
 
-// ---------- 4. Cancel Appointment ----------
 exports.cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -220,7 +213,6 @@ exports.cancelAppointment = async (req, res) => {
   }
 };
 
-// ---------- 5. Update / Reschedule Appointment ----------
 exports.updateAppointment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -254,7 +246,6 @@ exports.updateAppointment = async (req, res) => {
       });
     }
 
-    // Reschedule
     if (slotDate || slotTime) {
       const targetDate = slotDate ? new Date(slotDate) : existingAppointment.slotDate;
       const targetTime = slotTime || existingAppointment.slotTime;
@@ -292,7 +283,6 @@ exports.updateAppointment = async (req, res) => {
       existingAppointment.slotTime = targetTime;
     }
 
-    // Status transition
     if (status) {
       const allowedStatuses = ["pending", "confirmed", "completed", "cancelled"];
       if (!allowedStatuses.includes(status)) {

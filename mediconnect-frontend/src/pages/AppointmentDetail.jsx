@@ -43,7 +43,7 @@ export default function AppointmentDetail() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [id]);
 
   if (loading) return <div className="container page"><Loader label="Loading appointment details" /></div>;
@@ -78,7 +78,7 @@ export default function AppointmentDetail() {
 
   return (
     <div className="container page" style={{ maxWidth: 940, paddingBottom: 64 }}>
-      {/* Top Bar: Back Link & Status */}
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <Link
           to="/appointments"
@@ -98,7 +98,6 @@ export default function AppointmentDetail() {
         <StatusBadge status={appointment.status} />
       </div>
 
-      {/* Main Header Banner */}
       <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 28 }}>
         <div
           style={{
@@ -134,7 +133,6 @@ export default function AppointmentDetail() {
         </div>
       </div>
 
-      {/* Live Video Consultation Card (When Confirmed / Active) */}
       {isConfirmed && (
         <div
           style={{
@@ -183,7 +181,6 @@ export default function AppointmentDetail() {
         </div>
       )}
 
-      {/* 1. Appointment Details Card */}
       <div
         style={{
           background: "#FFFFFF",
@@ -194,7 +191,7 @@ export default function AppointmentDetail() {
           marginBottom: 20,
         }}
       >
-        {/* Card Header */}
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #F3F4F6" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 18 }}>📅</span>
@@ -215,9 +212,8 @@ export default function AppointmentDetail() {
           </div>
         </div>
 
-        {/* 2-Column Info Grid */}
         <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 32, alignItems: "center" }} className="appointment-details-grid">
-          {/* Doctor Info */}
+
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             {doctorUser.profilePicUrl && !imgError ? (
               <img
@@ -267,7 +263,6 @@ export default function AppointmentDetail() {
             </div>
           </div>
 
-          {/* Details Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ color: "#6B7280", display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -293,7 +288,6 @@ export default function AppointmentDetail() {
         </div>
       </div>
 
-      {/* 2. Payment Card */}
       <div
         style={{
           background: "#FFFFFF",
@@ -322,10 +316,8 @@ export default function AppointmentDetail() {
         {isDoctor && <DoctorPaymentView appointment={appointment} paid={paid} />}
       </div>
 
-      {/* 3. Prescription Card */}
       <PrescriptionPanel appointment={appointment} isDoctor={isDoctor} isPatient={isPatient} />
 
-      {/* 4. Reschedule / Cancel Actions (if active) */}
       {isActive && (
         <div style={{ marginTop: 20, marginBottom: 28 }}>
           <ActionsPanel
@@ -339,7 +331,6 @@ export default function AppointmentDetail() {
         </div>
       )}
 
-      {/* 5. Bottom Navigation & Action Bar */}
       <div
         style={{
           display: "flex",
@@ -382,10 +373,6 @@ export default function AppointmentDetail() {
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Payment Panel                                                      */
-/* ------------------------------------------------------------------ */
 
 function PaymentPanel({ appointment, paid, setPaid, doctorUser, onPaid }) {
   const toast = useToast();

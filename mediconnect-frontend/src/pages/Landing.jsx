@@ -8,7 +8,7 @@ export default function Landing() {
 
   return (
     <div style={{ background: "var(--paper)" }}>
-      {/* ---------- HERO ---------- */}
+
       <section className="container" style={{ maxWidth: 1320, paddingTop: 56, paddingBottom: 56 }}>
         <div
           style={{
@@ -19,7 +19,7 @@ export default function Landing() {
           }}
           className="hero-grid"
         >
-          {/* Hero Left Content */}
+
           <div>
             <div className="eyebrow" style={{ marginBottom: 22 }}>
               <span className="eyebrow-dot" />
@@ -71,9 +71,8 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Hero Right Visual (Video Consultation Showcase) */}
           <div style={{ position: "relative" }}>
-            {/* Showcase Image Frame */}
+
             <div
               className="card card-elevated"
               style={{
@@ -100,7 +99,6 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* ---------- STATS & TRUST ROW ---------- */}
         <div
           style={{
             marginTop: 48,
@@ -113,7 +111,7 @@ export default function Landing() {
             gap: 24,
           }}
         >
-          {/* Numbers */}
+
           <div style={{ display: "flex", gap: 48, flexWrap: "wrap" }}>
             <div>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 600, color: "var(--ink)" }}>
@@ -135,7 +133,6 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Badges */}
           <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
               <span>🩺</span> Trusted Medical Care
@@ -150,9 +147,6 @@ export default function Landing() {
         </div>
       </section>
 
-
-
-      {/* ---------- HOW MEDICONNECT WORKS (CARE DELIVERY MODEL) ---------- */}
       <section
         style={{
           borderTop: "1px solid var(--line)",
@@ -162,7 +156,7 @@ export default function Landing() {
         }}
       >
         <div className="container">
-          {/* Header (Option 3: Quality Healthcare Made Simple) */}
+
           <div style={{ maxWidth: 700, marginBottom: 52 }}>
             <span
               style={{
@@ -185,7 +179,6 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* 2-Column Split: Image on Left + 3 Step Cards on Right */}
           <div
             style={{
               display: "grid",
@@ -195,7 +188,7 @@ export default function Landing() {
             }}
             className="how-it-works-grid"
           >
-            {/* Left Column: Enlarged Real Consultation Photo (Badge removed) */}
+
             <div>
               <div
                 style={{
@@ -221,9 +214,8 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Right Column: 3 Sleek White Step Cards */}
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {/* Step 1 */}
+
               <div
                 className="card card-pad"
                 style={{
@@ -263,7 +255,6 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Step 2 */}
               <div
                 className="card card-pad"
                 style={{
@@ -303,7 +294,6 @@ export default function Landing() {
                 </div>
               </div>
 
-              {/* Step 3 */}
               <div
                 className="card card-pad"
                 style={{
@@ -347,7 +337,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ---------- WHY CHOOSE MEDICONNECT ---------- */}
       <section className="container" style={{ padding: "72px 24px" }}>
         <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto 48px" }}>
           <span className="eyebrow" style={{ marginBottom: 12 }}>Comprehensive Care</span>
@@ -392,7 +381,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ---------- BOTTOM ELEVATED CTA CARD WITH DARK GREEN BG ---------- */}
       <section style={{ padding: "72px 0", background: "var(--paper)" }}>
         <div className="container" style={{ maxWidth: 1080 }}>
           <div

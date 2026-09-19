@@ -38,10 +38,10 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     profilePicUrl: {
-      type: String, // Cloudinary or Google profile image URL
+      type: String,
     },
     profilePicPublicId: {
-      type: String, // Cloudinary public_id for clean asset replacement
+      type: String,
     },
     role: {
       type: String,
@@ -61,19 +61,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// hash the password before save
 userSchema.pre("save", async function () {
   if (!this.password || !this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-// custom comparison function
 userSchema.methods.isPasswordCorrect = async function (password) {
   if (!this.password) return false;
   return await bcrypt.compare(password, this.password);
 };
 
-// generate access token custom function
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
@@ -89,7 +86,6 @@ userSchema.methods.generateAccessToken = function () {
   );
 };
 
-// generate refresh token custim function
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
@@ -103,6 +99,5 @@ userSchema.methods.generateRefreshToken = function () {
     }
   );
 };
-
 
 module.exports = mongoose.model("User", userSchema);

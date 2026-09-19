@@ -25,7 +25,7 @@ export default function Prescriptions() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const filteredPrescriptions = useMemo(() => {
@@ -49,7 +49,7 @@ export default function Prescriptions() {
 
   return (
     <div className="container page" style={{ maxWidth: 1140, paddingBottom: 64 }}>
-      {/* Header with Records Badge, Title, Subtitle, and Search */}
+
       <div
         style={{
           display: "flex",
@@ -91,7 +91,6 @@ export default function Prescriptions() {
           </p>
         </div>
 
-        {/* Search Bar */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ position: "relative", minWidth: 280 }}>
             <span
@@ -171,7 +170,7 @@ export default function Prescriptions() {
                 }}
                 className="prescription-card-row"
               >
-                {/* 1. Date Box */}
+
                 <div
                   style={{
                     background: "#F0FDF4",
@@ -194,7 +193,6 @@ export default function Prescriptions() {
                   )}
                 </div>
 
-                {/* 2. Doctor Info with Avatar */}
                 <div
                   style={{
                     display: "flex",
@@ -259,7 +257,6 @@ export default function Prescriptions() {
                   </div>
                 </div>
 
-                {/* 3. Diagnosis & Medicines Summary */}
                 <div
                   style={{
                     display: "flex",
@@ -294,7 +291,6 @@ export default function Prescriptions() {
                   </div>
                 </div>
 
-                {/* 4. Follow-up pill (if present) + Soft Capsule Icon */}
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   {p.followUpDate && (
                     <div
@@ -332,7 +328,6 @@ export default function Prescriptions() {
                   </div>
                 </div>
 
-                {/* 5. View Prescription Button */}
                 <button
                   type="button"
                   onClick={() => setSelectedRx(p)}
@@ -376,9 +371,6 @@ export default function Prescriptions() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* PRESCRIPTION DETAIL MODAL (CARD OVERLAY)                     */}
-      {/* ───────────────────────────────────────────────────────────── */}
       {selectedRx && (
         <div
           style={{
@@ -411,7 +403,7 @@ export default function Prescriptions() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+
             <div
               style={{
                 background: "linear-gradient(135deg, #0F3E36 0%, #185A4F 100%)",
@@ -494,9 +486,8 @@ export default function Prescriptions() {
               </div>
             </div>
 
-            {/* Modal Content - Scrollable */}
             <div style={{ padding: "24px 28px", overflowY: "auto", flex: 1 }}>
-              {/* Prescription No & Issue Date */}
+
               <div
                 style={{
                   display: "flex",
@@ -551,7 +542,6 @@ export default function Prescriptions() {
                 </div>
               </div>
 
-              {/* Patient & Doctor Grid */}
               <div
                 style={{
                   display: "grid",
@@ -623,7 +613,6 @@ export default function Prescriptions() {
                 </div>
               </div>
 
-              {/* Appointment Schedule */}
               <div
                 style={{
                   background: "#F9FAFB",
@@ -647,7 +636,6 @@ export default function Prescriptions() {
                 </span>
               </div>
 
-              {/* Diagnosis Card */}
               <div
                 style={{
                   background: "#F0FDF4",
@@ -676,7 +664,6 @@ export default function Prescriptions() {
                 </div>
               </div>
 
-              {/* Prescribed Medicines */}
               <div style={{ marginBottom: 20 }}>
                 <div
                   style={{
@@ -791,7 +778,6 @@ export default function Prescriptions() {
                 )}
               </div>
 
-              {/* Follow-up Note */}
               {selectedRx.followUpDate && (
                 <div
                   style={{
@@ -813,7 +799,6 @@ export default function Prescriptions() {
               )}
             </div>
 
-            {/* Modal Actions Footer */}
             <div
               style={{
                 borderTop: "1px solid #E5E7EB",

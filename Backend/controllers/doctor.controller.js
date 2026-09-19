@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const Doctor = require("../models/doctor.model");
 const { getOrSetCache, deleteCache, invalidateCachePattern } = require("../utils/cache");
 
-// 1. Create Doctor Profile (Doctor only)
 exports.createDoctorProfile = async (req, res) => {
   try {
     const {
@@ -13,7 +12,6 @@ exports.createDoctorProfile = async (req, res) => {
       availability,
     } = req.body;
 
-    // Validate required fields
     if (!specialization || experience === undefined || !qualification || consultationFee === undefined) {
       return res.status(400).json({
         success: false,
@@ -21,7 +19,6 @@ exports.createDoctorProfile = async (req, res) => {
       });
     }
 
-    // Check if doctor profile already exists for this user
     const existingDoctor = await Doctor.findOne({ userId: req.user._id });
     if (existingDoctor) {
       return res.status(400).json({
@@ -39,7 +36,6 @@ exports.createDoctorProfile = async (req, res) => {
       availability: availability || [],
     });
 
-    // Invalidate cached doctor directory list
     await invalidateCachePattern("doctors:*");
 
     return res.status(201).json({
@@ -56,7 +52,6 @@ exports.createDoctorProfile = async (req, res) => {
   }
 };
 
-// 2. Get Logged-in Doctor's Own Profile
 exports.getMyDoctorProfile = async (req, res) => {
   try {
     const doctorData = await Doctor.findOne({ userId: req.user._id }).populate(
@@ -85,7 +80,6 @@ exports.getMyDoctorProfile = async (req, res) => {
   }
 };
 
-// 3. Update Doctor Profile & Availability
 exports.updateDoctorProfile = async (req, res) => {
   try {
     const {
@@ -117,7 +111,6 @@ exports.updateDoctorProfile = async (req, res) => {
       });
     }
 
-    // Invalidate cached doctor directory lists and specific doctor detail cache
     await invalidateCachePattern("doctors:list:*");
     await deleteCache(`doctors:detail:${updatedDoctor._id}`);
 
@@ -135,14 +128,13 @@ exports.updateDoctorProfile = async (req, res) => {
   }
 };
 
-// 4. Get All Doctors (Public / Search / Filter with Redis Caching)
 exports.getAllDoctors = async (req, res) => {
   try {
     const { specialization, maxFee, minExp } = req.query;
 
     const filter = {};
     if (specialization) {
-      filter.specialization = { $regex: specialization, $options: "i" }; // Case-insensitive search
+      filter.specialization = { $regex: specialization, $options: "i" };
     }
     if (maxFee) {
       filter.consultationFee = { $lte: Number(maxFee) };
@@ -151,14 +143,12 @@ exports.getAllDoctors = async (req, res) => {
       filter.experience = { $gte: Number(minExp) };
     }
 
-    // Deterministic cache key based on query filters
     const cacheKey = `doctors:list:${JSON.stringify({
       specialization: specialization ? specialization.toLowerCase().trim() : "",
       maxFee: maxFee || "",
       minExp: minExp || "",
     })}`;
 
-    // Cache for 10 minutes (600s)
     const doctors = await getOrSetCache(cacheKey, 600, async () => {
       return await Doctor.find(filter).populate(
         "userId",
@@ -180,12 +170,10 @@ exports.getAllDoctors = async (req, res) => {
   }
 };
 
-// 5. Get Doctor By ID (Public / Detail View with Redis Caching)
 exports.getDoctorById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate if MongoDB ObjectId format is valid
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
@@ -195,7 +183,6 @@ exports.getDoctorById = async (req, res) => {
 
     const cacheKey = `doctors:detail:${id}`;
 
-    // Cache for 10 minutes (600s)
     const doctorData = await getOrSetCache(cacheKey, 600, async () => {
       return await Doctor.findById(id).populate(
         "userId",
@@ -230,7 +217,6 @@ exports.getDoctorById = async (req, res) => {
   }
 };
 
-// 6. Verify / Toggle Doctor Verification (Admin only)
 exports.verifyDoctor = async (req, res) => {
   try {
     const { id } = req.params;
@@ -269,4 +255,3 @@ exports.verifyDoctor = async (req, res) => {
     });
   }
 };
-

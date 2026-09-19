@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Backend base URL. Matches PORT in Backend/.env (default 3000)
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3000";
 
 export default defineConfig({
@@ -9,10 +8,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Every request the app makes to /api/v1/* is forwarded to the backend
-      // server-side, so the browser only ever talks to ONE origin (this dev
-      // server). That means cookies (accessToken/refreshToken) work exactly
-      // like a same-origin app and the backend needs zero CORS changes.
+
       "/api/v1": {
         target: BACKEND_URL,
         changeOrigin: true,

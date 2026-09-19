@@ -102,10 +102,6 @@ function Avatar({ url, name }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Patient profile                                                     */
-/* ------------------------------------------------------------------ */
-
 function PatientProfileForm() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
@@ -142,7 +138,7 @@ function PatientProfileForm() {
     } catch (err) {
       if (err.status === 404) {
         setExists(false);
-        setIsEditing(true); // Open in edit mode if no profile exists
+        setIsEditing(true);
       } else {
         toast.error(err.message || "Could not load your profile.");
       }
@@ -153,7 +149,7 @@ function PatientProfileForm() {
 
   useEffect(() => {
     loadProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const handleCancelEdit = () => {
@@ -330,7 +326,6 @@ function PatientProfileForm() {
         </div>
       ))}
 
-      {/* Only show Save and Cancel buttons when editing */}
       {isEditing && (
         <div className="row" style={{ gap: 12, marginTop: 16 }}>
           <button className="btn btn-rust" type="submit" disabled={saving}>
@@ -351,10 +346,6 @@ function PatientProfileForm() {
     </form>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* Doctor profile                                                       */
-/* ------------------------------------------------------------------ */
 
 function DoctorProfileForm() {
   const toast = useToast();
@@ -388,7 +379,7 @@ function DoctorProfileForm() {
     } catch (err) {
       if (err.status === 404) {
         setExists(false);
-        setIsEditing(true); // Open in edit mode if incomplete
+        setIsEditing(true);
       } else {
         toast.error(err.message || "Could not load your profile.");
       }
@@ -399,7 +390,7 @@ function DoctorProfileForm() {
 
   useEffect(() => {
     loadDoctorProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const handleCancelEdit = () => {

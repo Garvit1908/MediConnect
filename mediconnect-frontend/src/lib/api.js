@@ -1,6 +1,3 @@
-// In production on Vercel, requests point to the deployed Render backend URL
-// (via import.meta.env.VITE_API_BASE_URL or fallback to Render). In dev, it falls back to "/api/v1"
-// which is proxied by Vite dev server.
 const API_HOST =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD ? "https://mediconnect-32xp.onrender.com" : "");
@@ -27,7 +24,7 @@ async function parseBody(res) {
 async function request(path, { method = "GET", body, isForm = false, retry = true } = {}) {
   const opts = {
     method,
-    credentials: "include", // send/receive the httpOnly cookies
+    credentials: "include",
   };
 
   if (body !== undefined) {
@@ -41,8 +38,6 @@ async function request(path, { method = "GET", body, isForm = false, retry = tru
 
   const res = await fetch(`${BASE}${path}`, opts);
 
-  // Transparent single-retry refresh: if the access token expired, try to
-  // silently rotate it via the refresh cookie, then replay the request once.
   if (res.status === 401 && retry && path !== "/auth/refresh-token" && path !== "/auth/login") {
     const refreshRes = await fetch(`${BASE}/auth/refresh-token`, {
       method: "POST",
@@ -62,7 +57,7 @@ async function request(path, { method = "GET", body, isForm = false, retry = tru
 }
 
 export const api = {
-  // ---- auth ----
+
   sendOtp: (email) => request("/auth/send-otp", { method: "POST", body: { email } }),
   signup: (payload) => request("/auth/signup", { method: "POST", body: payload }),
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
@@ -77,13 +72,11 @@ export const api = {
     return request("/auth/profile-picture", { method: "PUT", body: fd, isForm: true });
   },
 
-  // ---- patients ----
   getMyPatientProfile: () => request("/patients/me"),
   createPatientProfile: (payload) => request("/patients", { method: "POST", body: payload }),
   updatePatientProfile: (payload) => request("/patients/me", { method: "PUT", body: payload }),
   getPatientById: (id) => request(`/patients/${id}`),
 
-  // ---- doctors ----
   getMyDoctorProfile: () => request("/doctors/me"),
   createDoctorProfile: (payload) => request("/doctors", { method: "POST", body: payload }),
   updateDoctorProfile: (payload) => request("/doctors/me", { method: "PUT", body: payload }),
@@ -92,26 +85,22 @@ export const api = {
   verifyDoctor: (id, isVerified = true) =>
     request(`/doctors/${id}/verify`, { method: "PATCH", body: { isVerified } }),
 
-  // ---- appointments ----
   bookAppointment: (payload) => request("/appointments", { method: "POST", body: payload }),
   getMyAppointments: () => request("/appointments/my"),
   getAppointmentById: (id) => request(`/appointments/${id}`),
   cancelAppointment: (id) => request(`/appointments/${id}/cancel`, { method: "PUT" }),
   updateAppointment: (id, payload) => request(`/appointments/${id}`, { method: "PUT", body: payload }),
 
-  // ---- payments ----
   createOrder: (appointmentId) => request("/payments/create-order", { method: "POST", body: { appointmentId } }),
   verifyPayment: (payload) => request("/payments/verify-payment", { method: "POST", body: payload }),
   getMyPayments: () => request("/payments/my"),
 
-  // ---- prescriptions ----
   createPrescription: (payload) => request("/prescriptions", { method: "POST", body: payload }),
   getMyPrescriptions: () => request("/prescriptions/my"),
   getPrescriptionByAppointmentId: (appointmentId) => request(`/prescriptions/appointment/${appointmentId}`),
   getPrescriptionById: (id) => request(`/prescriptions/${id}`),
   updatePrescription: (id, payload) => request(`/prescriptions/${id}`, { method: "PUT", body: payload }),
 
-  // ---- medical records ----
   uploadMedicalRecord: (formData) => request("/medical-records", { method: "POST", body: formData, isForm: true }),
   getMyMedicalRecords: () => request("/medical-records/my"),
   getPatientMedicalRecords: (patientId) => request(`/medical-records/patient/${patientId}`),

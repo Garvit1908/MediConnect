@@ -3,7 +3,6 @@ const Doctor = require("../models/doctor.model");
 const Appointment = require("../models/appointment.model");
 const mongoose = require("mongoose");
 
-// for doctor to fetch patient profile from id 
 exports.getpatient = async (req, res) => {
     try {
         const { id } = req.params;
@@ -52,7 +51,6 @@ exports.getpatient = async (req, res) => {
     }
 }
 
-// controller to patient get his own profile
 exports.getMyPatientProfile = async (req, res) => {
     try {
         const patientdata = await Patient.findOne({ userId: req.user._id })
@@ -93,7 +91,7 @@ exports.createpatient = async (req, res) => {
         }
 
         const newPatient = await Patient.create({
-            userId: req.user._id, // Auth middleware se logged-in user ki ID
+            userId: req.user._id,
             age,
             gender,
             bloodGroup,
@@ -116,8 +114,6 @@ exports.createpatient = async (req, res) => {
     }
 }
 
-
-// updateProfile 
 exports.updatepatient = async (req, res) => {
     try {
         const { age, gender, bloodGroup, address, medicalHistory } = req.body;

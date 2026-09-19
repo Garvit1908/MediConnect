@@ -51,7 +51,7 @@ export default function DoctorDetail() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [id]);
 
   useEffect(() => {
@@ -66,7 +66,6 @@ export default function DoctorDetail() {
     })();
   }, [user]);
 
-  // Dynamically compute the next available dates for this specific doctor (skipping unavailable days)
   const quickDates = useMemo(() => {
     if (!doctor?.availability || doctor.availability.length === 0) return [];
     const availableDaysSet = new Set(doctor.availability.map((a) => a.day));
@@ -91,7 +90,6 @@ export default function DoctorDetail() {
     return dates;
   }, [doctor]);
 
-  // If initial slotDate (today) is not available for this doctor, auto-pick their first available day
   useEffect(() => {
     if (doctor?.availability?.length > 0) {
       const todayDay = weekdayFor(todayISODate());
@@ -154,9 +152,9 @@ export default function DoctorDetail() {
   return (
     <div className="container page" style={{ maxWidth: 1220, paddingBottom: 64 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr", gap: 32, alignItems: "flex-start" }} className="booking-layout-grid">
-        {/* ================= LEFT COLUMN ================= */}
+
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          {/* 1. Doctor Profile Overview Card */}
+
           <div
             style={{
               background: "#FFFFFF",
@@ -168,7 +166,7 @@ export default function DoctorDetail() {
               overflow: "hidden",
             }}
           >
-            {/* Subtle decorative radial accent */}
+
             <div
               style={{
                 position: "absolute",
@@ -182,7 +180,7 @@ export default function DoctorDetail() {
             />
 
             <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-              {/* Doctor Avatar with Verified Badge */}
+
               <div style={{ position: "relative", flexShrink: 0 }}>
                 {doctorUser.profilePicUrl && !imgError ? (
                   <img
@@ -243,7 +241,6 @@ export default function DoctorDetail() {
                 )}
               </div>
 
-              {/* Badges, Name, Qualifications */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
                   <span
@@ -294,7 +291,6 @@ export default function DoctorDetail() {
               </div>
             </div>
 
-            {/* 3 Metrics Cards */}
             <div
               style={{
                 display: "grid",
@@ -337,7 +333,6 @@ export default function DoctorDetail() {
             </div>
           </div>
 
-          {/* 2. Weekly Availability Schedule Card */}
           <div
             style={{
               background: "#FFFFFF",
@@ -430,7 +425,6 @@ export default function DoctorDetail() {
           </div>
         </div>
 
-        {/* ================= RIGHT COLUMN (BOOKING PANEL) ================= */}
         <div
           style={{
             background: "#FFFFFF",
@@ -442,7 +436,7 @@ export default function DoctorDetail() {
             top: 24,
           }}
         >
-          {/* Header */}
+
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
             <div>
               <span
@@ -481,7 +475,6 @@ export default function DoctorDetail() {
             </div>
           </div>
 
-          {/* User Auth & Verification Warnings */}
           {!user && (
             <div className="alert alert-info" style={{ marginBottom: 16 }}>
               <span>
@@ -578,12 +571,10 @@ export default function DoctorDetail() {
             </div>
           )}
 
-          {/* Booking Form */}
           {user && user.role === "patient" && hasProfile && doctor.isVerified && (
             <form onSubmit={handleBook}>
               {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
-              {/* 1. Mode of Consultation */}
               <div style={{ marginBottom: 22 }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B7280", marginBottom: 8, fontWeight: 600 }}>
                   1. Mode of Consultation
@@ -626,7 +617,6 @@ export default function DoctorDetail() {
                 </div>
               </div>
 
-              {/* 2. Select Consultation Date */}
               <div style={{ marginBottom: 22 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B7280", fontWeight: 600 }}>
@@ -637,7 +627,6 @@ export default function DoctorDetail() {
                   </div>
                 </div>
 
-                {/* Quick Date Pills: Only shows actual working days for this doctor! */}
                 {quickDates.length > 0 && (
                   <div style={{ display: "grid", gridTemplateColumns: `repeat(${quickDates.length}, 1fr)`, gap: 8, marginBottom: 10 }}>
                     {quickDates.map((q) => {
@@ -672,7 +661,6 @@ export default function DoctorDetail() {
                   </div>
                 )}
 
-                {/* Native Picker Input */}
                 <input
                   type="date"
                   min={todayISODate()}
@@ -694,7 +682,6 @@ export default function DoctorDetail() {
                 />
               </div>
 
-              {/* 3. Choose Time Slot */}
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: "#6B7280", marginBottom: 10, fontWeight: 600 }}>
                   3. Choose Time Slot ({daySchedule?.slotDuration || 30}M)
@@ -710,7 +697,7 @@ export default function DoctorDetail() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    {/* Morning Slots */}
+
                     {morningSlots.length > 0 && (
                       <div>
                         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#9CA3AF", marginBottom: 8 }}>
@@ -745,7 +732,6 @@ export default function DoctorDetail() {
                       </div>
                     )}
 
-                    {/* Afternoon Slots */}
                     {afternoonSlots.length > 0 && (
                       <div>
                         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#9CA3AF", marginBottom: 8 }}>
@@ -783,7 +769,6 @@ export default function DoctorDetail() {
                 )}
               </div>
 
-              {/* Price Summary Breakdown Box */}
               <div
                 style={{
                   background: "#F9FAFB",
@@ -826,7 +811,6 @@ export default function DoctorDetail() {
                 </div>
               </div>
 
-              {/* Submit CTA Button */}
               <button
                 className="btn btn-rust btn-block"
                 type="submit"
@@ -849,7 +833,6 @@ export default function DoctorDetail() {
                 {booking ? "Reserving Slot…" : `Book for ${formatINR(doctor.consultationFee)} →`}
               </button>
 
-              {/* Trust Footer */}
               <div
                 style={{
                   display: "flex",

@@ -20,7 +20,7 @@ const defaultAvailability = [
 
 export default function Signup() {
   const location = useLocation();
-  const [step, setStep] = useState(location.state?.step || 1); // 1: Info -> 2: OTP -> 3: Complete Profile
+  const [step, setStep] = useState(location.state?.step || 1);
   const [form, setForm] = useState({
     ...initialForm,
     role: location.state?.role || "patient",
@@ -29,7 +29,6 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Patient Profile Details
   const [patientData, setPatientData] = useState({
     age: "",
     gender: "",
@@ -37,7 +36,6 @@ export default function Signup() {
     address: "",
   });
 
-  // Doctor Profile Details
   const [doctorData, setDoctorData] = useState({
     specialization: "",
     experience: "",
@@ -54,7 +52,6 @@ export default function Signup() {
   const updatePatient = (key) => (e) => setPatientData((p) => ({ ...p, [key]: e.target.value }));
   const updateDoctor = (key) => (e) => setDoctorData((d) => ({ ...d, [key]: e.target.value }));
 
-  // Google Sign-Up handler
   const handleGoogleSignupSuccess = async (credential) => {
     setError("");
     setBusy(true);
@@ -74,7 +71,6 @@ export default function Signup() {
     }
   };
 
-  // Step 1: Request OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError("");
@@ -94,16 +90,15 @@ export default function Signup() {
     }
   };
 
-  // Step 2: Verify OTP & Authenticate
   const handleVerify = async (e) => {
     e.preventDefault();
     setError("");
     setBusy(true);
     try {
       await api.signup({ ...form, otp });
-      await refreshSession(); // Refresh session to get authenticated user in context
+      await refreshSession();
       toast.success("Account verified! Please complete your profile to continue.");
-      setStep(3); // Go to mandatory profile step
+      setStep(3);
     } catch (err) {
       setError(err.message || "Verification failed. Please check the code.");
     } finally {
@@ -111,7 +106,6 @@ export default function Signup() {
     }
   };
 
-  // Step 3: Complete Patient Profile
   const handlePatientProfileSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -134,7 +128,6 @@ export default function Signup() {
     }
   };
 
-  // Step 3: Complete Doctor Profile
   const handleDoctorProfileSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -176,7 +169,6 @@ export default function Signup() {
 
         {error && <div className="alert alert-error">{error}</div>}
 
-        {/* STEP 1: Account Details */}
         {step === 1 && (
           <div>
             <div className="field">
@@ -222,7 +214,6 @@ export default function Signup() {
           </div>
         )}
 
-        {/* STEP 2: OTP Verification */}
         {step === 2 && (
           <form onSubmit={handleVerify}>
             <div className="field">
@@ -262,7 +253,6 @@ export default function Signup() {
           </form>
         )}
 
-        {/* STEP 3: Mandatory Patient Profile Form */}
         {step === 3 && form.role === "patient" && (
           <form onSubmit={handlePatientProfileSubmit} className="card card-pad">
             <div className="alert alert-info" style={{ marginBottom: 18 }}>
@@ -326,7 +316,6 @@ export default function Signup() {
           </form>
         )}
 
-        {/* STEP 3: Mandatory Doctor Profile Form */}
         {step === 3 && form.role === "doctor" && (
           <form onSubmit={handleDoctorProfileSubmit} className="card card-pad">
             <div className="alert alert-info" style={{ marginBottom: 18 }}>

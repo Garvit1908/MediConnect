@@ -2,17 +2,10 @@ const Appointment = require("../models/appointment.model");
 const Doctor = require("../models/doctor.model");
 const Patient = require("../models/patient.model");
 
-/**
- * Room & Appointment Security Manager
- * Ensures that only the authorized Doctor and Patient can enter the consultation room.
- * Enforces a strict limit of max 2 participants per 1-on-1 consultation.
- */
 class RoomManager {
-  /**
-   * Authorize whether a user has permission to join an appointment room
-   */
+
   static async validateRoomAccess(roomId, user) {
-    // In dev / test rooms, allow if room starts with 'demo_' or 'test_'
+
     if (roomId.startsWith("demo_") || roomId.startsWith("test_")) {
       return { authorized: true, appointment: null };
     }
@@ -29,14 +22,13 @@ class RoomManager {
         .populate("doctorId");
 
       if (!appointment) {
-        // If room is not linked to DB yet, permit entry in dev mode with a warning
+
         if (process.env.NODE_ENV !== "production") {
           return { authorized: true, appointment: null };
         }
         return { authorized: false, reason: "Appointment room not found" };
       }
 
-      // Strict Guard: Only confirmed (and paid) appointments are allowed into the consultation room
       if (appointment.status !== "confirmed") {
         return {
           authorized: false,
@@ -44,7 +36,6 @@ class RoomManager {
         };
       }
 
-      // Check user permissions
       if (user.role === "admin") {
         return { authorized: true, appointment };
       }
@@ -72,9 +63,6 @@ class RoomManager {
     }
   }
 
-  /**
-   * Check room participant count (Max 2 for 1-on-1 consultation)
-   */
   static getParticipantCount(io, roomId) {
     const room = io.sockets.adapter.rooms.get(roomId);
     return room ? room.size : 0;

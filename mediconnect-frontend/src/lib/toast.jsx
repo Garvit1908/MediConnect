@@ -6,8 +6,6 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const idRef = useRef(0);
 
-  // Tracks the last "message|type" pushed and when, so identical toasts
-  // fired back-to-back get collapsed instead of stacking indefinitely.
   const lastPushRef = useRef({ key: null, time: 0 });
 
   const push = useCallback((message, type = "info", duration = 4000) => {
@@ -20,12 +18,12 @@ export function ToastProvider({ children }) {
     lastPushRef.current = { key, time: now };
 
     setToasts((prev) => {
-      // Deduplication: do not stack identical messages if already visible
+
       if (prev.some((t) => t.message === message)) {
         return prev;
       }
       const id = ++idRef.current;
-      // Cap visible toasts to maximum 3 to prevent screen flooding
+
       const trimmed = prev.length >= 3 ? prev.slice(prev.length - 2) : prev;
       window.setTimeout(() => {
         setToasts((curr) => curr.filter((x) => x.id !== id));
@@ -34,7 +32,6 @@ export function ToastProvider({ children }) {
     });
   }, []);
 
-  // Stable reference so useEffect dependencies don't re-trigger unnecessarily
   const value = useMemo(
     () => ({
       success: (m) => push(m, "success"),

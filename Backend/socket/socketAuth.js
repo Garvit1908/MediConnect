@@ -1,14 +1,9 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 
-/**
- * Socket.IO Authentication Middleware
- * Validates JWT access token from handshake auth or cookies.
- * Attaches authenticated user object to socket.user.
- */
 const socketAuth = async (socket, next) => {
   try {
-    // 1. Extract token from socket handshake auth, headers, or cookies
+
     let token = socket.handshake.auth?.token;
 
     if (!token && socket.handshake.headers?.authorization) {
@@ -29,12 +24,10 @@ const socketAuth = async (socket, next) => {
       }
     }
 
-    // 2. Reject immediately if no token was provided
     if (!token) {
       return next(new Error("Authentication failed: No access token provided"));
     }
 
-    // 3. Cryptographically verify JWT Token against ACCESS_TOKEN_SECRET
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const user = await User.findById(decoded._id).select("-password");
 

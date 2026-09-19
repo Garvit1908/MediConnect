@@ -9,8 +9,8 @@ if (redisUri) {
     redisClient = new Redis(redisUri, {
       lazyConnect: true,
       maxRetriesPerRequest: 1,
-      commandTimeout: 1500, // Fail fast (1.5s) if Redis is unresponsive
-      enableOfflineQueue: false, // Don't block requests if Redis is offline
+      commandTimeout: 1500,
+      enableOfflineQueue: false,
       retryStrategy(times) {
         if (times > 5) {
           console.warn("⚠️ Redis: max reconnection attempts reached. Disabling reconnect loop.");
@@ -38,7 +38,6 @@ if (redisUri) {
       isRedisConnected = false;
     });
 
-    // Attempt non-blocking initial connection
     redisClient.connect().catch((err) => {
       isRedisConnected = false;
       console.warn("⚠️ Redis initial connect skipped (falling back to MongoDB):", err.message);

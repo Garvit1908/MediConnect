@@ -1,4 +1,3 @@
-// Mirrors the backend's day-of-week mapping exactly (controllers/appointment.controller.js)
 export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function weekdayFor(dateStr) {
@@ -11,10 +10,6 @@ export function weekdayFor(dateStr) {
   return WEEKDAYS[new Date(dateStr).getDay()];
 }
 
-// Generates candidate slot strings ("09:00", "09:30", ...) between startTime
-// and endTime (exclusive of endTime) at slotDuration-minute steps. This is a
-// client-side convenience only — the backend is the source of truth and will
-// reject anything outside the doctor's real availability or already booked.
 export function generateSlots(startTime, endTime, slotDuration = 30) {
   const [sh, sm] = startTime.split(":").map(Number);
   const [eh, em] = endTime.split(":").map(Number);
@@ -62,13 +57,6 @@ export function formatINR(amount) {
   return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
-// ---------- Local "already paid" cache ----------
-// The backend exposes no GET endpoint to read a payment's status for an
-// appointment (only create-order + verify-payment). We therefore track a
-// confirmed-paid flag locally once verify-payment succeeds, and also set it
-// when create-order tells us the payment was already completed. This is a
-// convenience cache only — every payment attempt is still verified for real
-// against the backend/Razorpay; this never grants access on its own.
 const PAID_CACHE_KEY = "mediconnect_paid_appointments";
 
 function readPaidCache() {
@@ -112,9 +100,6 @@ export const STATUS_BADGE = {
   paid: "badge-teal",
 };
 
-// Returns true if a slot's date+time is in the past (or within `graceMinutes`
-// before the slot). Used to prevent early "Mark as Completed" by doctors and
-// to filter out unselectable past time slots when booking for today.
 export function isSlotInPast(dateStr, timeStr, graceMinutes = 0) {
   if (!dateStr || !timeStr) return false;
   const parts = dateStr.split("T")[0].split("-").map(Number);
@@ -125,13 +110,10 @@ export function isSlotInPast(dateStr, timeStr, graceMinutes = 0) {
   return slotDate <= now;
 }
 
-// Returns true if slot date+time is reachable (i.e. hasn't fully passed yet).
-// A 30-min grace is given so consultations that started can still be completed.
 export function isSlotReachable(dateStr, timeStr) {
   return !isSlotInPast(dateStr, timeStr, -30);
 }
 
-// Converts "14:30" → "2:30 PM"
 export function formatTime(timeStr) {
   if (!timeStr) return "—";
   const [h, m] = timeStr.split(":").map(Number);
@@ -140,9 +122,6 @@ export function formatTime(timeStr) {
   return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-// Determines whether the live video consultation room is accessible.
-// Window: 30 minutes before slot time until 60 minutes after slot time.
-// Doctors can always start or enter a confirmed session.
 export function getConsultationAccess(dateStr, timeStr, status, role = "") {
   if (!status || status === "pending") {
     return { allowed: false, reason: "Payment pending. Please complete payment to confirm your appointment and unlock the consultation room." };
@@ -160,7 +139,6 @@ export function getConsultationAccess(dateStr, timeStr, status, role = "") {
     return { allowed: false, reason: "Invalid appointment schedule." };
   }
 
-  // Doctors and Admins can always start/enter a confirmed session
   if (role === "doctor" || role === "admin") {
     return { allowed: true };
   }
@@ -170,9 +148,8 @@ export function getConsultationAccess(dateStr, timeStr, status, role = "") {
   const slotDate = new Date(parts[0], parts[1] - 1, parts[2], h, m, 0, 0);
   const now = new Date();
 
-  // Window starts 30 minutes before scheduled time
   const windowStart = new Date(slotDate.getTime() - 30 * 60 * 1000);
-  // Window closes 120 minutes after scheduled time to accommodate running consultations
+
   const windowEnd = new Date(slotDate.getTime() + 120 * 60 * 1000);
 
   if (now < windowStart) {
@@ -197,4 +174,3 @@ export function getConsultationAccess(dateStr, timeStr, status, role = "") {
 
   return { allowed: true };
 }
-

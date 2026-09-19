@@ -37,7 +37,7 @@ const medicalRecordSchema = new mongoose.Schema(
       required: true,
     },
     fileType: {
-      type: String, // 'image' or 'pdf' / 'raw'
+      type: String,
       default: "image",
     },
     description: {

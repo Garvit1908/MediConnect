@@ -13,7 +13,7 @@ export default function AdminDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterTab, setFilterTab] = useState("pending"); // "all" | "pending" | "verified"
+  const [filterTab, setFilterTab] = useState("pending");
   const [actionBusyId, setActionBusyId] = useState(null);
 
   const fetchDoctors = async () => {
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDoctors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const handleToggleVerification = async (doctor, targetStatus) => {
@@ -56,13 +56,11 @@ export default function AdminDashboard() {
     }
   };
 
-  // Metrics calculation
   const totalDoctors = doctors.length;
   const pendingDoctors = doctors.filter((d) => !d.isVerified);
   const verifiedDoctors = doctors.filter((d) => d.isVerified);
   const uniqueSpecialties = new Set(doctors.map((d) => d.specialization).filter(Boolean)).size;
 
-  // Filtered list
   const displayedDoctors = doctors.filter((doc) => {
     const matchesTab =
       filterTab === "all"
@@ -86,7 +84,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="container page" style={{ maxWidth: 1200 }}>
-      {/* Page Header */}
+
       <div
         style={{
           display: "flex",
@@ -118,7 +116,6 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Current Admin Tag */}
         <div
           className="card card-pad"
           style={{
@@ -152,13 +149,12 @@ export default function AdminDashboard() {
               Primary Admin Session
             </div>
             <div style={{ fontSize: 13.5, fontWeight: 600, color: "#111827" }}>
-              {user?.email || "johncen.8091@gmail.com"}
+              {user?.email || "Admin"}
             </div>
           </div>
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
       <div
         style={{
           display: "grid",
@@ -217,7 +213,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Control Console: Tabs & Search */}
       <div
         className="card card-pad"
         style={{
@@ -230,7 +225,7 @@ export default function AdminDashboard() {
           gap: 16,
         }}
       >
-        {/* Filter Tabs */}
+
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="button"
@@ -298,7 +293,6 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* Search Bar */}
         <div style={{ minWidth: 260, flex: "1 1 260px", maxWidth: 400 }}>
           <input
             type="search"
@@ -317,7 +311,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Main List Table / Cards */}
       {loading ? (
         <Loader label="Synchronizing provider compliance records…" />
       ) : displayedDoctors.length === 0 ? (
@@ -378,7 +371,7 @@ export default function AdminDashboard() {
                   borderLeft: doctor.isVerified ? "4px solid #059669" : "4px solid #D97706",
                 }}
               >
-                {/* Left: Doctor Details */}
+
                 <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 280, flex: "1 1 300px" }}>
                   {docUser.profilePicUrl ? (
                     <img
@@ -451,7 +444,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Right: Actions */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                   <Link
                     to={`/doctors/${doctor._id}`}

@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import { useToast } from "../lib/toast";
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState(1); // 1: Email -> 2: OTP & New Password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -15,7 +15,6 @@ export default function ForgotPassword() {
   const toast = useToast();
   const navigate = useNavigate();
 
-  // Step 1: Send Forgot Password OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError("");
@@ -35,7 +34,6 @@ export default function ForgotPassword() {
     }
   };
 
-  // Step 2: Reset Password with OTP
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");

@@ -7,7 +7,6 @@ import { useToast } from "../lib/toast";
 import Loader from "../components/Loader";
 import { getConsultationAccess, formatDate, formatTime } from "../lib/helpers";
 
-// Public STUN configuration
 const rtcConfig = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -16,7 +15,7 @@ const rtcConfig = {
 };
 
 export default function ConsultationRoom() {
-  const { id } = useParams(); // Appointment ID
+  const { id } = useParams();
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -24,18 +23,15 @@ export default function ConsultationRoom() {
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Call States
-  const [callStatus, setCallStatus] = useState("connecting"); // "connecting" | "waiting" | "connected" | "ended"
+  const [callStatus, setCallStatus] = useState("connecting");
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [peerName, setPeerName] = useState("");
-  const [activeTab, setActiveTab] = useState("chat"); // "chat" | "notes"
+  const [activeTab, setActiveTab] = useState("chat");
 
-  // Chat State
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
 
-  // Refs for WebRTC and Media
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -45,7 +41,6 @@ export default function ConsultationRoom() {
   const chatBottomRef = useRef(null);
   const callEndedRef = useRef(false);
 
-  // 1. Fetch appointment details on mount
   useEffect(() => {
     let mounted = true;
 
@@ -73,7 +68,6 @@ export default function ConsultationRoom() {
     ? getConsultationAccess(appointment.slotDate, appointment.slotTime, appointment.status, user?.role)
     : { allowed: false };
 
-  // 2. Initialize WebRTC & Sockets once appointment is loaded and window is active
   useEffect(() => {
     if (!appointment || !user || !access.allowed) return;
 
@@ -82,7 +76,6 @@ export default function ConsultationRoom() {
     let socket = null;
     let localStream = null;
 
-    // Helper: Drain queued ICE candidates once remoteDescription is set
     const flushQueuedCandidates = async (pc) => {
       if (iceCandidatesQueueRef.current.length > 0 && pc && pc.remoteDescription) {
         while (iceCandidatesQueueRef.current.length > 0) {
@@ -96,21 +89,18 @@ export default function ConsultationRoom() {
       }
     };
 
-    // Helper: Create RTCPeerConnection
     const createPeerConnection = () => {
       if (peerConnectionRef.current) return peerConnectionRef.current;
 
       const pc = new RTCPeerConnection(rtcConfig);
       peerConnectionRef.current = pc;
 
-      // Add local audio & video tracks
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => {
           pc.addTrack(track, localStreamRef.current);
         });
       }
 
-      // Receive remote video stream
       pc.ontrack = (event) => {
         if (remoteVideoRef.current && event.streams && event.streams[0]) {
           remoteVideoRef.current.srcObject = event.streams[0];
@@ -118,7 +108,6 @@ export default function ConsultationRoom() {
         }
       };
 
-      // Send local ICE candidates to peer
       pc.onicecandidate = (event) => {
         if (event.candidate && socketRef.current) {
           socketRef.current.emit("send-ice-candidate", {
@@ -128,7 +117,6 @@ export default function ConsultationRoom() {
         }
       };
 
-      // Track connection state
       pc.onconnectionstatechange = () => {
         const state = pc.connectionState;
         if (state === "connected") {
@@ -156,16 +144,14 @@ export default function ConsultationRoom() {
       iceCandidatesQueueRef.current = [];
     };
 
-    // Main Startup Function
     async function startCall() {
       try {
-        // 1. Get Camera & Microphone
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: true,
         });
 
-        // If unmounted or cancelled while awaiting device access, stop immediately!
         if (isCancelled) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -177,19 +163,16 @@ export default function ConsultationRoom() {
           localVideoRef.current.srcObject = stream;
         }
 
-        // 2. Connect Socket.IO with credentials support
         const socketTarget =
           import.meta.env.VITE_API_BASE_URL ||
           (import.meta.env.PROD ? "https://mediconnect-32xp.onrender.com" : window.location.origin);
         socket = io(socketTarget, {
           withCredentials: true,
-          // Authentication is supplied by the HttpOnly access-token cookie.
-          // Never copy JWTs into localStorage or trust client-supplied identity fields.
+
           auth: {},
         });
         socketRef.current = socket;
 
-        // Socket Event: Connected
         socket.on("connect", () => {
           socket.emit("join-room", { roomId });
         });
@@ -198,7 +181,6 @@ export default function ConsultationRoom() {
           toast.error("Your session could not be authenticated. Please log in again.");
         });
 
-        // Socket Event: Room Joined
         socket.on("room-joined", ({ participantCount }) => {
           if (participantCount > 1) {
             setCallStatus("connecting");
@@ -207,7 +189,6 @@ export default function ConsultationRoom() {
           }
         });
 
-        // Socket Event: Second participant arrives (Caller initiates Offer)
         socket.on("user-joined", async ({ user: peerUser }) => {
           if (callEndedRef.current || isCancelled) return;
           setPeerName(peerUser?.username || "Peer");
@@ -223,7 +204,6 @@ export default function ConsultationRoom() {
           }
         });
 
-        // Socket Event: Receiver receives SDP Offer -> Creates SDP Answer
         socket.on("receive-offer", async ({ offer, sender }) => {
           if (callEndedRef.current || isCancelled) return;
           setPeerName(sender?.username || "Peer");
@@ -241,7 +221,6 @@ export default function ConsultationRoom() {
           }
         });
 
-        // Socket Event: Caller receives SDP Answer
         socket.on("receive-answer", async ({ answer }) => {
           if (callEndedRef.current || isCancelled) return;
           const pc = peerConnectionRef.current;
@@ -256,12 +235,11 @@ export default function ConsultationRoom() {
           }
         });
 
-        // Socket Event: Receive ICE Candidate
         socket.on("receive-ice-candidate", async ({ candidate }) => {
           if (callEndedRef.current || isCancelled) return;
           const pc = peerConnectionRef.current;
           if (!pc || !pc.remoteDescription) {
-            // Buffer early candidate
+
             iceCandidatesQueueRef.current.push(candidate);
           } else {
             try {
@@ -272,7 +250,6 @@ export default function ConsultationRoom() {
           }
         });
 
-        // Socket Event: Receive In-Call Chat Message
         socket.on("receive-message", (msg) => {
           setMessages((prev) => [...prev, msg]);
           setTimeout(() => {
@@ -280,7 +257,6 @@ export default function ConsultationRoom() {
           }, 50);
         });
 
-        // Socket Event: Call Ended by Either Party
         socket.on("call-ended", ({ by, message }) => {
           if (callEndedRef.current) return;
           callEndedRef.current = true;
@@ -291,7 +267,6 @@ export default function ConsultationRoom() {
           socketRef.current = null;
         });
 
-        // Socket Event: Peer Left
         socket.on("user-left", ({ message, user: peerUser }) => {
           if (callEndedRef.current) return;
           toast.warning(message || "Peer has left the consultation.");
@@ -305,7 +280,6 @@ export default function ConsultationRoom() {
           }
         });
 
-        // Socket Event: Room Error
         socket.on("room-error", ({ message }) => {
           toast.error(message || "Consultation room error.");
         });
@@ -319,11 +293,10 @@ export default function ConsultationRoom() {
 
     startCall();
 
-    // 3. Complete Cleanup on Component Unmount & Tab Close
     const cleanup = () => {
       isCancelled = true;
       callEndedRef.current = true;
-      // Physically stop hardware media tracks to turn off camera LED
+
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop());
         localStreamRef.current = null;
@@ -356,29 +329,26 @@ export default function ConsultationRoom() {
     };
   }, [appointment, user, toast]);
 
-  // Audio Toggle
   const toggleAudio = () => {
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = isAudioMuted; // Toggle
+        audioTrack.enabled = isAudioMuted;
         setIsAudioMuted(!isAudioMuted);
       }
     }
   };
 
-  // Video Toggle
   const toggleVideo = () => {
     if (localStreamRef.current) {
       const videoTrack = localStreamRef.current.getVideoTracks()[0];
       if (videoTrack) {
-        videoTrack.enabled = isVideoOff; // Toggle
+        videoTrack.enabled = isVideoOff;
         setIsVideoOff(!isVideoOff);
       }
     }
   };
 
-  // Send In-Call Message
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim() || !socketRef.current || !appointment) return;
@@ -391,18 +361,17 @@ export default function ConsultationRoom() {
     setChatInput("");
   };
 
-  // Leave / End Call
   const handleEndCall = () => {
     if (window.confirm("End this consultation session?")) {
       callEndedRef.current = true;
       const roomId = appointment.roomId || `room_${appointment._id}`;
-      // 1. Notify other peer that the call was ended
+
       if (socketRef.current) {
         socketRef.current.emit("end-call", { roomId });
         socketRef.current.disconnect();
         socketRef.current = null;
       }
-      // 2. Shut off hardware camera & mic tracks immediately
+
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop());
         localStreamRef.current = null;
@@ -505,7 +474,7 @@ export default function ConsultationRoom() {
 
   return (
     <div className="container page consultation-page">
-      {/* Header Bar */}
+
       <div className="consultation-header">
         <div>
           <span className="eyebrow">Encrypted Video Consultation</span>
@@ -527,12 +496,11 @@ export default function ConsultationRoom() {
         </div>
       </div>
 
-      {/* Main Video & Chat Workspace */}
       <div className="consultation-grid">
-        {/* Left: Video Stage */}
+
         <div className="video-stage-card">
           <div className="video-viewport">
-            {/* Remote Video Stream */}
+
             <video
               ref={remoteVideoRef}
               autoPlay
@@ -540,7 +508,6 @@ export default function ConsultationRoom() {
               className={`remote-video ${callStatus === "connected" ? "visible" : "hidden"}`}
             />
 
-            {/* Remote Placeholder when waiting */}
             {callStatus !== "connected" && (
               <div className="video-empty-state">
                 <div className="pulse-icon">🎥</div>
@@ -551,14 +518,12 @@ export default function ConsultationRoom() {
               </div>
             )}
 
-            {/* Remote Peer Label */}
             {callStatus === "connected" && (
               <div className="video-peer-tag">
                 {peerName || counterpartName}
               </div>
             )}
 
-            {/* Local Video Picture-in-Picture */}
             <div className="local-pip-container">
               <video
                 ref={localVideoRef}
@@ -571,7 +536,6 @@ export default function ConsultationRoom() {
             </div>
           </div>
 
-          {/* Video Control Bar */}
           <div className="consultation-controls">
             <button
               className={`control-btn ${isAudioMuted ? "btn-danger-active" : ""}`}
@@ -602,7 +566,6 @@ export default function ConsultationRoom() {
           </div>
         </div>
 
-        {/* Right: In-Call Sidebar */}
         <div className="consultation-sidebar card card-pad">
           <div className="sidebar-tab-header">
             <button

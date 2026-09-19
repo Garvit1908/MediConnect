@@ -15,10 +15,8 @@ const initSocket = require("./socket");
 const app = express();
 const server = http.createServer(app);
 
-// Trust first proxy hop (essential for HTTPS secure cookies behind Nginx / Render / Cloudflare / AWS)
 app.set("trust proxy", 1);
 
-// Allowed origins for CORS (Development and Production)
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -43,7 +41,6 @@ const checkOrigin = (origin, callback) => {
   return callback(null, false);
 };
 
-// Attach Socket.IO with dynamic CORS support
 const io = new Server(server, {
   cors: {
     origin: checkOrigin,
@@ -52,12 +49,10 @@ const io = new Server(server, {
   },
 });
 
-// Initialize Socket Handlers & Auth
 initSocket(io);
 
 cloudinaryConnect();
 
-// Express CORS Middleware with Credentials
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -82,7 +77,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(requireSameOrigin);
 
-// Health Check endpoint for Docker / Container Orchestrators (Render, Railway, ECS, K8s)
 app.get(["/health", "/api/v1/health"], (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
   return res.status(isDbConnected ? 200 : 503).json({
@@ -90,10 +84,8 @@ app.get(["/health", "/api/v1/health"], (req, res) => {
   });
 });
 
-// Serve static frontend files for WebRTC testing
 app.use(express.static(path.join(__dirname, "public")));
 
-// Routes
 const authRoutes = require("./routes/auth.route");
 app.use("/api/v1/auth", authRoutes);
 
@@ -115,12 +107,10 @@ app.use("/api/v1/medical-records", medicalRecordRoutes);
 const paymentRoutes = require("./routes/payment.route");
 app.use("/api/v1/payments", paymentRoutes);
 
-// 404 handler for unmatched API routes
 app.use("/api", (req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
 
-// Global Error Handling Middleware (Catches Multer & Unhandled Errors)
 app.use((err, req, res, next) => {
   if (err.name === "MulterError") {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -153,7 +143,7 @@ const PORT = process.env.PORT || 4000;
 
 dbconnect()
   .then(async () => {
-    // 🛡️ Auto-seed primary admin account (johncen.8091@gmail.com)
+
     await seedAdmin();
 
     server.listen(PORT, () => {

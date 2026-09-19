@@ -35,7 +35,7 @@ export default function Navbar() {
           padding: "0 24px",
         }}
       >
-        {/* Brand */}
+
         <NavLink
           to="/"
           style={{
@@ -60,7 +60,6 @@ export default function Navbar() {
           </span>
         </NavLink>
 
-        {/* Navigation Links */}
         <nav
           style={{
             display: "flex",
@@ -119,7 +118,6 @@ export default function Navbar() {
           )}
         </nav>
 
-        {/* Right User Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
           {user ? (
             <>
@@ -269,4 +267,3 @@ function Mark() {
     />
   );
 }
-

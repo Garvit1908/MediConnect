@@ -7,9 +7,9 @@ const availabilitySchema = new mongoose.Schema(
       enum: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       required: true,
     },
-    startTime: { type: String, required: true }, // "09:00"
-    endTime: { type: String, required: true }, // "17:00"
-    slotDuration: { type: Number, default: 30 }, // minutes
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
+    slotDuration: { type: Number, default: 30 },
   },
   { _id: false }
 );

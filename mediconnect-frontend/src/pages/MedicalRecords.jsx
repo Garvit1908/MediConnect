@@ -20,17 +20,14 @@ export default function MedicalRecords() {
   const toast = useToast();
   const fileRef = useRef(null);
 
-  // Active Tab: "billing" (Invoices & Receipts) | "records" (Clinical Documents)
   const [activeTab, setActiveTab] = useState("billing");
 
-  // Records state
   const [records, setRecords] = useState([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ title: "", recordType: "lab_report", description: "" });
   const [error, setError] = useState("");
 
-  // Payments / Receipts state
   const [payments, setPayments] = useState([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
@@ -62,7 +59,7 @@ export default function MedicalRecords() {
   useEffect(() => {
     loadPayments();
     loadRecords();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const handleUpload = async (e) => {
@@ -117,7 +114,7 @@ export default function MedicalRecords() {
 
   return (
     <div className="container page">
-      {/* Header */}
+
       <div className="page-head" style={{ marginBottom: 20 }}>
         <div>
           <span className="eyebrow">Patient Vault</span>
@@ -125,7 +122,6 @@ export default function MedicalRecords() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: "flex", gap: 10, borderBottom: "1px solid var(--line)", marginBottom: 26, paddingBottom: 2 }}>
         <button
           type="button"
@@ -178,9 +174,6 @@ export default function MedicalRecords() {
         </button>
       </div>
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 1: BILLING & PAYMENT RECEIPTS                             */}
-      {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === "billing" && (
         <div>
           {loadingPayments ? (
@@ -276,9 +269,6 @@ export default function MedicalRecords() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* TAB 2: CLINICAL DOCUMENTS & REPORTS                           */}
-      {/* ───────────────────────────────────────────────────────────── */}
       {activeTab === "records" && (
         <div>
           <form onSubmit={handleUpload} className="card card-pad" style={{ marginBottom: 28 }}>
@@ -340,9 +330,6 @@ export default function MedicalRecords() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* RECEIPT / INVOICE MODAL                                       */}
-      {/* ───────────────────────────────────────────────────────────── */}
       {selectedReceipt && (
         <div
           style={{
@@ -373,7 +360,7 @@ export default function MedicalRecords() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
+
             <div
               style={{
                 background: "linear-gradient(135deg, #0F3E36 0%, #185A4F 100%)",
@@ -398,7 +385,6 @@ export default function MedicalRecords() {
               </span>
             </div>
 
-            {/* Modal Body / Invoice Content */}
             <div style={{ padding: "26px 30px" }}>
               <div className="spread" style={{ marginBottom: 20, borderBottom: "1px solid var(--line)", paddingBottom: 14 }}>
                 <div>
@@ -415,7 +401,6 @@ export default function MedicalRecords() {
                 </div>
               </div>
 
-              {/* Patient & Doctor Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
                 <div style={{ background: "#F9FAFB", padding: "12px 16px", borderRadius: 8 }}>
                   <span className="faint" style={{ fontSize: 11, textTransform: "uppercase" }}>Billed To (Patient)</span>
@@ -436,7 +421,6 @@ export default function MedicalRecords() {
                 </div>
               </div>
 
-              {/* Consultation Particulars */}
               <div style={{ marginBottom: 24 }}>
                 <div className="ledger-row" style={{ padding: "10px 0" }}>
                   <span className="ledger-label">Appointment Schedule</span>
@@ -468,7 +452,6 @@ export default function MedicalRecords() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
                 <button
                   type="button"

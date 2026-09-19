@@ -1,4 +1,3 @@
-// WebRTC & Socket.IO Telehealth Client
 let socket = null;
 let localStream = null;
 let peerConnection = null;
@@ -7,9 +6,8 @@ let currentRoomId = null;
 let currentUser = { name: "User", role: "patient" };
 let isAudioMuted = false;
 let isVideoOff = false;
-let iceCandidatesQueue = []; // Buffer to prevent Early ICE Candidate race conditions
+let iceCandidatesQueue = [];
 
-// STUN Server Configuration
 const rtcConfig = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -18,7 +16,6 @@ const rtcConfig = {
   ],
 };
 
-// DOM Elements
 const setupOverlay = document.getElementById("setupOverlay");
 const mainWorkspace = document.getElementById("mainWorkspace");
 const localVideo = document.getElementById("localVideo");
@@ -35,7 +32,6 @@ const chatInput = document.getElementById("chatInput");
 const chatMessages = document.getElementById("chatMessages");
 const logsContainer = document.getElementById("logsContainer");
 
-// Tab switching
 const tabChatBtn = document.getElementById("tabChatBtn");
 const tabLogsBtn = document.getElementById("tabLogsBtn");
 const chatPanel = document.getElementById("chatPanel");
@@ -69,9 +65,6 @@ function updateConnectionBadge(state, text) {
   statusText.textContent = text;
 }
 
-// -------------------------------------------------------------
-// 1. Initialize Consultation Session
-// -------------------------------------------------------------
 document.getElementById("joinBtn").addEventListener("click", async () => {
   const roomId = document.getElementById("roomIdInput").value.trim();
   const role = document.getElementById("roleSelect").value;
@@ -99,16 +92,11 @@ document.getElementById("joinBtn").addEventListener("click", async () => {
   updateConnectionBadge("connecting", "Initializing Devices...");
   logTelemetry(`Joining room "${roomId}" as ${username} (${role})...`, "info");
 
-  // Start local camera & microphone
   await startLocalMedia();
 
-  // Connect to Socket.IO Server
   initSocketConnection(token);
 });
 
-// -------------------------------------------------------------
-// 2. Camera & Microphone Access (getUserMedia)
-// -------------------------------------------------------------
 async function startLocalMedia() {
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -124,9 +112,6 @@ async function startLocalMedia() {
   }
 }
 
-// -------------------------------------------------------------
-// 3. Socket.IO Connection & Signaling Events
-// -------------------------------------------------------------
 function initSocketConnection(token) {
   socket = io({
     auth: { token },
@@ -135,8 +120,7 @@ function initSocketConnection(token) {
   socket.on("connect", () => {
     logTelemetry(`Socket connected with ID: ${socket.id}`, "success");
     updateConnectionBadge("connecting", "Joining Room...");
-    
-    // Join the consultation room
+
     socket.emit("join-room", { roomId: currentRoomId });
   });
 
@@ -157,11 +141,10 @@ function initSocketConnection(token) {
     alert(`Room Error: ${message}`);
   });
 
-  // Caller Flow: When second peer arrives, initiate SDP Offer
   socket.on("user-joined", async ({ socketId, user }) => {
     logTelemetry(`Peer ${user?.username || socketId} entered the room. Initiating WebRTC Offer...`, "info");
     document.getElementById("remotePeerLabel").textContent = `${user?.username || "Peer"} (${user?.role || "Remote"})`;
-    
+
     createPeerConnection();
 
     try {
@@ -178,7 +161,6 @@ function initSocketConnection(token) {
     }
   });
 
-  // Receiver Flow: When SDP Offer is received, create SDP Answer
   socket.on("receive-offer", async ({ offer, from, sender }) => {
     logTelemetry(`Received SDP Offer from ${sender?.username || from}. Creating SDP Answer...`, "info");
     document.getElementById("remotePeerLabel").textContent = `${sender?.username || "Peer"} (${sender?.role || "Remote"})`;
@@ -189,7 +171,6 @@ function initSocketConnection(token) {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
       logTelemetry("Remote SDP Offer applied successfully", "success");
 
-      // Flush any queued early ICE candidates
       await flushQueuedIceCandidates();
 
       const answer = await peerConnection.createAnswer();
@@ -205,21 +186,18 @@ function initSocketConnection(token) {
     }
   });
 
-  // Caller Flow: Apply incoming SDP Answer
   socket.on("receive-answer", async ({ answer, from, sender }) => {
     logTelemetry(`Received SDP Answer from ${sender?.username || from}. Finalizing connection...`, "success");
     try {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
       logTelemetry("Remote SDP Answer applied. P2P Handshake complete!", "success");
 
-      // Flush any queued early ICE candidates
       await flushQueuedIceCandidates();
     } catch (err) {
       logTelemetry(`Failed to set remote answer: ${err.message}`, "error");
     }
   });
 
-  // Bi-directional ICE Candidate Exchange with Queue Buffer defense
   socket.on("receive-ice-candidate", async ({ candidate }) => {
     try {
       if (!peerConnection || !peerConnection.remoteDescription) {
@@ -234,7 +212,6 @@ function initSocketConnection(token) {
     }
   });
 
-  // Helper to drain queued ICE candidates after remoteDescription is established
   async function flushQueuedIceCandidates() {
     if (iceCandidatesQueue.length > 0 && peerConnection && peerConnection.remoteDescription) {
       logTelemetry(`Flushing ${iceCandidatesQueue.length} queued ICE candidate(s)...`, "info");
@@ -249,12 +226,10 @@ function initSocketConnection(token) {
     }
   }
 
-  // Peer Media State Sync
   socket.on("peer-media-toggled", ({ isAudioMuted: peerAudioMuted, isVideoOff: peerVideoOff }) => {
     logTelemetry(`Peer updated media: Audio=${peerAudioMuted ? "Muted" : "On"}, Video=${peerVideoOff ? "Off" : "On"}`, "info");
   });
 
-  // Peer Left
   socket.on("user-left", ({ message }) => {
     logTelemetry(message, "warn");
     remoteVideo.srcObject = null;
@@ -266,22 +241,17 @@ function initSocketConnection(token) {
     }
   });
 
-  // In-Call Chat Messages
   socket.on("receive-message", (msg) => {
     appendChatMessage(msg);
   });
 }
 
-// -------------------------------------------------------------
-// 4. RTCPeerConnection Setup & Lifecycle
-// -------------------------------------------------------------
 function createPeerConnection() {
   if (peerConnection) return;
 
   logTelemetry("Creating new RTCPeerConnection with STUN servers...", "info");
   peerConnection = new RTCPeerConnection(rtcConfig);
 
-  // 1. Add local audio and video tracks to PeerConnection
   if (localStream) {
     localStream.getTracks().forEach((track) => {
       peerConnection.addTrack(track, localStream);
@@ -289,7 +259,6 @@ function createPeerConnection() {
     logTelemetry("Attached local media tracks to RTCPeerConnection", "info");
   }
 
-  // 2. Listen for remote peer media stream
   peerConnection.ontrack = (event) => {
     logTelemetry("Received remote media stream track!", "success");
     if (event.streams && event.streams[0]) {
@@ -298,7 +267,6 @@ function createPeerConnection() {
     }
   };
 
-  // 3. ICE Candidate Generation
   peerConnection.onicecandidate = (event) => {
     if (event.candidate) {
       logTelemetry(`Generated local ICE candidate: ${event.candidate.type || "route"}`, "info");
@@ -309,7 +277,6 @@ function createPeerConnection() {
     }
   };
 
-  // 4. Connection State Tracking
   peerConnection.onconnectionstatechange = () => {
     const state = peerConnection.connectionState;
     logTelemetry(`WebRTC Connection State: ${state.toUpperCase()}`, state === "connected" ? "success" : "info");
@@ -322,10 +289,6 @@ function createPeerConnection() {
   };
 }
 
-// -------------------------------------------------------------
-// 5. In-Call Media Controls
-// -------------------------------------------------------------
-// Toggle Audio
 toggleAudioBtn.addEventListener("click", () => {
   if (!localStream) return;
   const audioTrack = localStream.getAudioTracks()[0];
@@ -344,7 +307,6 @@ toggleAudioBtn.addEventListener("click", () => {
   }
 });
 
-// Toggle Video
 toggleVideoBtn.addEventListener("click", () => {
   if (!localStream) return;
   const videoTrack = localStream.getVideoTracks()[0];
@@ -363,7 +325,6 @@ toggleVideoBtn.addEventListener("click", () => {
   }
 });
 
-// End Call
 endCallBtn.addEventListener("click", () => {
   if (confirm("Are you sure you want to end this consultation?")) {
     if (socket) {
@@ -381,9 +342,6 @@ endCallBtn.addEventListener("click", () => {
   }
 });
 
-// -------------------------------------------------------------
-// 6. In-Call Chat Handling
-// -------------------------------------------------------------
 chatForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const text = chatInput.value.trim();
@@ -419,9 +377,6 @@ function appendChatMessage({ text, senderName, senderRole, senderId, timestamp }
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// -------------------------------------------------------------
-// 7. Hardware & Socket Cleanup on Tab/Window Unload
-// -------------------------------------------------------------
 window.addEventListener("beforeunload", () => {
   if (localStream) {
     localStream.getTracks().forEach((track) => track.stop());

@@ -4,7 +4,6 @@ const Appointment = require("../models/appointment.model");
 const Doctor = require("../models/doctor.model");
 const Patient = require("../models/patient.model");
 
-// ---------- Helpers ----------
 const isValidDate = (date) => !isNaN(new Date(date).getTime());
 
 const isPastDate = (date) => {
@@ -15,7 +14,6 @@ const isPastDate = (date) => {
   return d < today;
 };
 
-// Helper: Check if logged-in user is the Patient or Doctor of this prescription (or Admin)
 const isAuthorizedForPrescription = async (prescriptionDoc, userId, userRole) => {
   if (userRole === "admin") return true;
 
@@ -35,12 +33,10 @@ const isAuthorizedForPrescription = async (prescriptionDoc, userId, userRole) =>
   return false;
 };
 
-// 1. Create Prescription (Doctor Only, on "completed" appointments only)
 exports.createPrescription = async (req, res) => {
   try {
     const { appointmentId, diagnosis, medicines, followUpDate } = req.body;
 
-    // Validate required fields
     if (!appointmentId || !diagnosis || typeof diagnosis !== "string" || !diagnosis.trim() || !medicines) {
       return res.status(400).json({
         success: false,
@@ -62,7 +58,6 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Validate structure of each medicine item
     for (const med of medicines) {
       if (
         !med.name || typeof med.name !== "string" || !med.name.trim() ||
@@ -77,7 +72,6 @@ exports.createPrescription = async (req, res) => {
       }
     }
 
-    // Validate followUpDate if provided
     if (followUpDate) {
       if (!isValidDate(followUpDate)) {
         return res.status(400).json({
@@ -93,7 +87,6 @@ exports.createPrescription = async (req, res) => {
       }
     }
 
-    // Check doctor profile
     const doctor = await Doctor.findOne({ userId: req.user._id });
     if (!doctor) {
       return res.status(404).json({
@@ -102,7 +95,6 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Find the appointment
     const targetAppointment = await Appointment.findById(appointmentId);
     if (!targetAppointment) {
       return res.status(404).json({
@@ -111,7 +103,6 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Ownership check: Is this appointment assigned to the logged-in doctor?
     if (targetAppointment.doctorId.toString() !== doctor._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -119,7 +110,6 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Strict Status Check: Prescription can ONLY be created for "completed" appointments
     if (targetAppointment.status !== "completed") {
       return res.status(400).json({
         success: false,
@@ -127,7 +117,6 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Check if prescription already exists for this appointment
     const existingPrescription = await Prescription.findOne({ appointmentId });
     if (existingPrescription) {
       return res.status(409).json({
@@ -136,7 +125,6 @@ exports.createPrescription = async (req, res) => {
       });
     }
 
-    // Sanitize medicines list
     const sanitizedMedicines = medicines.map((med) => ({
       name: med.name.trim(),
       dosage: med.dosage.trim(),
@@ -145,7 +133,6 @@ exports.createPrescription = async (req, res) => {
       instructions: med.instructions ? med.instructions.trim() : undefined,
     }));
 
-    // Create prescription
     const newPrescription = await Prescription.create({
       appointmentId: targetAppointment._id,
       doctorId: doctor._id,
@@ -186,7 +173,6 @@ exports.createPrescription = async (req, res) => {
   }
 };
 
-// 2. Get My Prescriptions (Patient or Doctor)
 exports.getMyPrescriptions = async (req, res) => {
   try {
     let filter = {};
@@ -231,7 +217,6 @@ exports.getMyPrescriptions = async (req, res) => {
   }
 };
 
-// 3. Get Prescription By ID
 exports.getPrescriptionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -261,7 +246,6 @@ exports.getPrescriptionById = async (req, res) => {
       });
     }
 
-    // Ownership check
     const isAllowed = await isAuthorizedForPrescription(prescriptionData, req.user._id, req.user.role);
     if (!isAllowed) {
       return res.status(403).json({
@@ -283,7 +267,6 @@ exports.getPrescriptionById = async (req, res) => {
   }
 };
 
-// 4. Get Prescription By Appointment ID
 exports.getPrescriptionByAppointmentId = async (req, res) => {
   try {
     const { appointmentId } = req.params;
@@ -313,7 +296,6 @@ exports.getPrescriptionByAppointmentId = async (req, res) => {
       });
     }
 
-    // Ownership check
     const isAllowed = await isAuthorizedForPrescription(prescriptionData, req.user._id, req.user.role);
     if (!isAllowed) {
       return res.status(403).json({
@@ -335,7 +317,6 @@ exports.getPrescriptionByAppointmentId = async (req, res) => {
   }
 };
 
-// 5. Update Prescription (Doctor Only)
 exports.updatePrescription = async (req, res) => {
   try {
     const { id } = req.params;
@@ -363,7 +344,6 @@ exports.updatePrescription = async (req, res) => {
       });
     }
 
-    // Only the doctor who issued the prescription (or admin) can update it
     const doctor = await Doctor.findOne({ userId: req.user._id });
     if (!doctor || existingPrescription.doctorId.toString() !== doctor._id.toString()) {
       return res.status(403).json({

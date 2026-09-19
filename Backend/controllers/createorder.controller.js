@@ -4,15 +4,10 @@ const Payment = require("../models/payment.model");
 const Appointment = require("../models/appointment.model");
 const Patient = require("../models/patient.model");
 
-// ==========================================
-// CREATE RAZORPAY ORDER (Patient Only)
-// ==========================================
-
 exports.createorder = async(req,res) => {
     try{
         const { appointmentId } = req.body;
 
-        //validate appointment
         if (!appointmentId) {
             return res.status(400).json({ success: false, message: "please provide Appointment Id" });
         }
@@ -24,7 +19,6 @@ exports.createorder = async(req,res) => {
             });
         }
 
-        // 2. Logged-in Patient profile fetch karo
         const patient = await Patient.findOne({ userId: req.user._id });
         if (!patient) {
             return res.status(404).json({
@@ -40,8 +34,7 @@ exports.createorder = async(req,res) => {
                     message: "Appointment not found",
                 });
             }
-        
-        // 4. Ownership Check: Sirf wahi patient pay kare jiska appointment hai
+
         if (appointmentDoc.patientId.toString() !== patient._id.toString()) {
             return res.status(403).json({
                 success: false,
@@ -49,7 +42,6 @@ exports.createorder = async(req,res) => {
             });
         }
 
-        // 5. State Guard: Cancelled ya Completed appointment par payment allow mat karo
         if (appointmentDoc.status === "cancelled") {
             return res.status(400).json({
                 success: false,
@@ -63,7 +55,6 @@ exports.createorder = async(req,res) => {
             });
         }
 
-        // 6. Check if already paid
             const existingSuccessfulPayment = await Payment.findOne({
             appointmentId: appointmentDoc._id,
             status: "completed",
@@ -74,8 +65,7 @@ exports.createorder = async(req,res) => {
                     message: "Payment has already been completed for this appointment.",
                 });
             }
-        // 7. Security: Amount DB se calculate karo (never trust req.body!)
-        // Razorpay amount paise mein leta hai (1 Rupee = 100 Paise)
+
         const amountInPaise = Math.round(appointmentDoc.consultationFee * 100);
 
          if (!amountInPaise || amountInPaise <= 0) {
@@ -85,7 +75,6 @@ exports.createorder = async(req,res) => {
             });
         }
 
-        // 0. Environment Key Check
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
             return res.status(500).json({
                 success: false,
@@ -93,11 +82,10 @@ exports.createorder = async(req,res) => {
             });
         }
 
-        // 8. Razorpay Order generate karo
         const options = {
             amount: amountInPaise,
             currency: "INR",
-            receipt: `receipt_appt_${appointmentDoc._id.toString().slice(-10)}`, // Max 40 chars safe
+            receipt: `receipt_appt_${appointmentDoc._id.toString().slice(-10)}`,
             notes: {
                 appointmentId: appointmentDoc._id.toString(),
                 patientId: patient._id.toString(),
@@ -107,16 +95,15 @@ exports.createorder = async(req,res) => {
 
         const razorpayOrder = await razorpay.orders.create(options);
 
-        // 9. Initial Payment entry save/update karo DB mein (Explicit $set and $setOnInsert for safe upsert)
         await Payment.findOneAndUpdate(
             {
                 appointmentId: appointmentDoc._id,
-                status: { $ne: "completed" }, // Only match non-completed payments
+                status: { $ne: "completed" },
             },
             {
                 $set: {
                     patientId: patient._id,
-                    amount: appointmentDoc.consultationFee, // In Rupees
+                    amount: appointmentDoc.consultationFee,
                     razorpayOrderId: razorpayOrder.id,
                     status: "pending",
                 },
@@ -127,12 +114,11 @@ exports.createorder = async(req,res) => {
             { upsert: true, new: true }
         );
 
-        // 10. Client ko response bhejo checkout open karne ke liye
         return res.status(200).json({
             success: true,
             message: "Razorpay order created successfully",
             orderId: razorpayOrder.id,
-            amount: razorpayOrder.amount, // Paise mein
+            amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
             keyId: process.env.RAZORPAY_KEY_ID,
             appointmentId: appointmentDoc._id,
