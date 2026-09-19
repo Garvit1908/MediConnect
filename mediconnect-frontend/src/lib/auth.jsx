@@ -30,6 +30,12 @@ export function AuthProvider({ children }) {
     return res.user;
   };
 
+  const googleLogin = async ({ credential, role }) => {
+    const res = await api.googleAuth({ credential, role });
+    setUser(res.user);
+    return res;
+  };
+
   const logout = async () => {
     try {
       // 1. Immediately cut all camera & microphone hardware streams
@@ -51,7 +57,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const value = { user, setUser, loading, login, logout, refreshSession };
+  const value = { user, setUser, loading, login, googleLogin, logout, refreshSession };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Doctor = require("../models/doctor.model");
+const { getOrSetCache, deleteCache, invalidateCachePattern } = require("../utils/cache");
 
 // 1. Create Doctor Profile (Doctor only)
 exports.createDoctorProfile = async (req, res) => {
@@ -37,6 +38,9 @@ exports.createDoctorProfile = async (req, res) => {
       consultationFee,
       availability: availability || [],
     });
+
+    // Invalidate cached doctor directory list
+    await invalidateCachePattern("doctors:*");
 
     return res.status(201).json({
       success: true,
@@ -113,6 +117,10 @@ exports.updateDoctorProfile = async (req, res) => {
       });
     }
 
+    // Invalidate cached doctor directory lists and specific doctor detail cache
+    await invalidateCachePattern("doctors:list:*");
+    await deleteCache(`doctors:detail:${updatedDoctor._id}`);
+
     return res.status(200).json({
       success: true,
       message: "Doctor profile updated successfully",
@@ -127,7 +135,7 @@ exports.updateDoctorProfile = async (req, res) => {
   }
 };
 
-// 4. Get All Doctors (Public / Search / Filter)
+// 4. Get All Doctors (Public / Search / Filter with Redis Caching)
 exports.getAllDoctors = async (req, res) => {
   try {
     const { specialization, maxFee, minExp } = req.query;
@@ -143,10 +151,20 @@ exports.getAllDoctors = async (req, res) => {
       filter.experience = { $gte: Number(minExp) };
     }
 
-    const doctors = await Doctor.find(filter).populate(
-      "userId",
-      "username email phone profilePicUrl"
-    );
+    // Deterministic cache key based on query filters
+    const cacheKey = `doctors:list:${JSON.stringify({
+      specialization: specialization ? specialization.toLowerCase().trim() : "",
+      maxFee: maxFee || "",
+      minExp: minExp || "",
+    })}`;
+
+    // Cache for 10 minutes (600s)
+    const doctors = await getOrSetCache(cacheKey, 600, async () => {
+      return await Doctor.find(filter).populate(
+        "userId",
+        "username email phone profilePicUrl"
+      );
+    });
 
     return res.status(200).json({
       success: true,
@@ -162,7 +180,7 @@ exports.getAllDoctors = async (req, res) => {
   }
 };
 
-// 5. Get Doctor By ID (Public / Detail View)
+// 5. Get Doctor By ID (Public / Detail View with Redis Caching)
 exports.getDoctorById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -175,10 +193,15 @@ exports.getDoctorById = async (req, res) => {
       });
     }
 
-    const doctorData = await Doctor.findById(id).populate(
-      "userId",
-      "username email phone profilePicUrl"
-    );
+    const cacheKey = `doctors:detail:${id}`;
+
+    // Cache for 10 minutes (600s)
+    const doctorData = await getOrSetCache(cacheKey, 600, async () => {
+      return await Doctor.findById(id).populate(
+        "userId",
+        "username email phone profilePicUrl"
+      );
+    });
 
     if (!doctorData) {
       return res.status(404).json({

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useToast } from "../lib/toast";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 const initialForm = { username: "", email: "", password: "", role: "patient" };
 
@@ -18,8 +19,12 @@ const defaultAvailability = [
 ];
 
 export default function Signup() {
-  const [step, setStep] = useState(1); // 1: Info -> 2: OTP -> 3: Complete Profile
-  const [form, setForm] = useState(initialForm);
+  const location = useLocation();
+  const [step, setStep] = useState(location.state?.step || 1); // 1: Info -> 2: OTP -> 3: Complete Profile
+  const [form, setForm] = useState({
+    ...initialForm,
+    role: location.state?.role || "patient",
+  });
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,11 +48,31 @@ export default function Signup() {
 
   const toast = useToast();
   const navigate = useNavigate();
-  const { refreshSession } = useAuth();
+  const { refreshSession, googleLogin } = useAuth();
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const updatePatient = (key) => (e) => setPatientData((p) => ({ ...p, [key]: e.target.value }));
   const updateDoctor = (key) => (e) => setDoctorData((d) => ({ ...d, [key]: e.target.value }));
+
+  // Google Sign-Up handler
+  const handleGoogleSignupSuccess = async (credential) => {
+    setError("");
+    setBusy(true);
+    try {
+      const res = await googleLogin({ credential, role: form.role });
+      if (res?.needsProfileSetup) {
+        toast.success("Google connected! Please complete your profile to finish setup.");
+        setStep(3);
+      } else {
+        toast.success("Welcome! Signed in with Google.");
+        navigate(res.user?.role === "doctor" ? "/appointments" : "/doctors");
+      }
+    } catch (err) {
+      setError(err.message || "Google registration failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Step 1: Request OTP
   const handleSendOtp = async (e) => {
@@ -153,34 +178,48 @@ export default function Signup() {
 
         {/* STEP 1: Account Details */}
         {step === 1 && (
-          <form onSubmit={handleSendOtp}>
+          <div>
             <div className="field">
-              <label>I am a</label>
+              <label>I am registering as a</label>
               <select value={form.role} onChange={update("role")}>
                 <option value="patient">Patient</option>
                 <option value="doctor">Doctor</option>
               </select>
             </div>
-            <div className="field">
-              <label>Username</label>
-              <input required value={form.username} onChange={update("username")} placeholder="jane_doe" />
-            </div>
-            <div className="field">
-              <label>Email</label>
-              <input type="email" required value={form.email} onChange={update("email")} placeholder="you@example.com" />
-            </div>
-            <div className="field">
-              <label>Password</label>
-              <input type="password" required minLength={6} value={form.password} onChange={update("password")} placeholder="At least 6 characters" />
-            </div>
-            <button className="btn btn-rust btn-block" type="submit" disabled={busy}>
-              {busy ? "Sending Code…" : "Send Verification Code"}
-            </button>
 
-            <p className="faint" style={{ marginTop: 20, textAlign: "center" }}>
-              Already have an account? <Link to="/login" className="link-quiet">Sign in</Link>
-            </p>
-          </form>
+            <GoogleAuthButton
+              text="signup_with"
+              onSuccess={handleGoogleSignupSuccess}
+              onError={(msg) => setError(msg)}
+              disabled={busy}
+            />
+
+            <div className="divider-with-text">
+              <span>or sign up with email</span>
+            </div>
+
+            <form onSubmit={handleSendOtp}>
+              <div className="field">
+                <label>Username</label>
+                <input required value={form.username} onChange={update("username")} placeholder="jane_doe" />
+              </div>
+              <div className="field">
+                <label>Email</label>
+                <input type="email" required value={form.email} onChange={update("email")} placeholder="you@example.com" />
+              </div>
+              <div className="field">
+                <label>Password</label>
+                <input type="password" required minLength={6} value={form.password} onChange={update("password")} placeholder="At least 6 characters" />
+              </div>
+              <button className="btn btn-rust btn-block" type="submit" disabled={busy}>
+                {busy ? "Sending Code…" : "Send Verification Code"}
+              </button>
+
+              <p className="faint" style={{ marginTop: 20, textAlign: "center" }}>
+                Already have an account? <Link to="/login" className="link-quiet">Sign in</Link>
+              </p>
+            </form>
+          </div>
         )}
 
         {/* STEP 2: OTP Verification */}

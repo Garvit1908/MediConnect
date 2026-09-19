@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useToast } from "../lib/toast";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -9,7 +10,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,13 +32,49 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSuccess = async (credential) => {
+    setError("");
+    setBusy(true);
+    try {
+      const res = await googleLogin({ credential });
+      toast.success("Logged in with Google successfully.");
+
+      if (res?.needsProfileSetup) {
+        navigate("/signup", { state: { step: 3, role: res.user?.role || "patient" } });
+      } else {
+        const destination =
+          from !== "/doctors"
+            ? from
+            : res.user?.role === "doctor"
+            ? "/appointments"
+            : "/doctors";
+        navigate(destination, { replace: true });
+      }
+    } catch (err) {
+      setError(err.message || "Google Sign-In failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="container page" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "calc(100vh - 200px)" }}>
       <div className="card card-pad card-elevated" style={{ maxWidth: 440, width: "100%", padding: "36px 32px" }}>
         <span className="eyebrow">Sign In</span>
-        <h1 style={{ fontSize: 28, margin: "12px 0 24px" }}>Welcome back.</h1>
+        <h1 style={{ fontSize: 28, margin: "12px 0 20px" }}>Welcome back.</h1>
 
         {error && <div className="alert alert-error">{error}</div>}
+
+        <GoogleAuthButton
+          text="signin_with"
+          onSuccess={handleGoogleSuccess}
+          onError={(msg) => setError(msg)}
+          disabled={busy}
+        />
+
+        <div className="divider-with-text">
+          <span>or continue with email</span>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="field">

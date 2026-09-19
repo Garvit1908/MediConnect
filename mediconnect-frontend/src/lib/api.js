@@ -66,6 +66,7 @@ export const api = {
   sendOtp: (email) => request("/auth/send-otp", { method: "POST", body: { email } }),
   signup: (payload) => request("/auth/signup", { method: "POST", body: payload }),
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
+  googleAuth: (payload) => request("/auth/google", { method: "POST", body: payload }),
   logout: () => request("/auth/logout", { method: "POST" }),
   forgotPasswordOtp: (email) => request("/auth/forgot-password-otp", { method: "POST", body: { email } }),
   resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload }),

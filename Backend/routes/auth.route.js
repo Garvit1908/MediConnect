@@ -5,6 +5,7 @@ const {
   sendOTP,
   signup,
   login,
+  googleAuth,
   logout,
   refreshAccessToken,
   updateProfilePicture,
@@ -35,6 +36,7 @@ const otpLimiter = rateLimit({
 router.post("/send-otp", otpLimiter, sendOTP);
 router.post("/signup", authLimiter, signup);
 router.post("/login", authLimiter, login);
+router.post("/google", authLimiter, googleAuth);
 router.post("/refresh-token", refreshAccessToken);
 
 // Forgot & Reset Password Flow

@@ -1,4 +1,6 @@
 const User = require("../models/user.model");
+const Patient = require("../models/patient.model");
+const Doctor = require("../models/doctor.model");
 const OTP = require("../models/otp.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -6,6 +8,55 @@ const otpGenerator = require("otp-generator");
 const mailsender = require("../utils/mailsender");
 const { getOTPEmailTemplate, getPasswordResetEmailTemplate } = require("../utils/emailTemplates");
 const { uploadStreamToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require("../utils/cloudinary");
+
+let googleOAuthClient = null;
+const getGoogleOAuthClient = () => {
+  if (!googleOAuthClient) {
+    try {
+      const { OAuth2Client } = require("google-auth-library");
+      googleOAuthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    } catch {
+      // Optional if library is not yet installed
+    }
+  }
+  return googleOAuthClient;
+};
+
+// Resilient verification: Uses google-auth-library locally or Google's tokeninfo API fallback
+const verifyGoogleIdToken = async (credential) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+
+  // 1. Try google-auth-library if present
+  const client = getGoogleOAuthClient();
+  if (client) {
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: clientId || undefined,
+      });
+      const payload = ticket.getPayload();
+      if (payload) return payload;
+    } catch (err) {
+      console.warn("google-auth-library verification failed, trying tokeninfo fallback:", err.message);
+    }
+  }
+
+  // 2. Official Google tokeninfo HTTP endpoint fallback
+  const res = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Google token validation failed: ${text || res.statusText}`);
+  }
+
+  const payload = await res.json();
+  if (clientId && payload.aud !== clientId) {
+    throw new Error("Google token audience mismatch. Invalid Client ID.");
+  }
+
+  return payload;
+};
 
 // Expiry durations in milliseconds
 const ACCESS_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day
@@ -640,6 +691,151 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to reset password",
+      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
+    });
+  }
+};
+
+// ==========================================
+// 9. GOOGLE OAUTH CONTROLLER
+// ==========================================
+exports.googleAuth = async (req, res) => {
+  try {
+    const { credential, role } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential token is required",
+      });
+    }
+
+    // Verify token with Google
+    let payload;
+    try {
+      payload = await verifyGoogleIdToken(credential);
+    } catch (verifyErr) {
+      console.error("Google token verification failed:", verifyErr.message);
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired Google credential",
+      });
+    }
+
+    const { email, sub: googleId, name, picture } = payload;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Google account does not provide an email address",
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // 1. Find user by googleId or email
+    let user = await User.findOne({
+      $or: [{ googleId }, { email: normalizedEmail }],
+    });
+
+    let isNewUser = false;
+
+    if (!user) {
+      // Prevent privilege escalation: only patient or doctor allowed
+      const assignedRole = role === "doctor" ? "doctor" : "patient";
+
+      // Sanitize username: alphanumeric and underscores only
+      let baseUsername = (name || normalizedEmail.split("@")[0])
+        .replace(/[^a-zA-Z0-9_]/g, "_")
+        .toLowerCase()
+        .slice(0, 25);
+      if (!baseUsername) baseUsername = "user";
+
+      // Ensure username uniqueness
+      let username = baseUsername;
+      let counter = 1;
+      while (await User.exists({ username })) {
+        username = `${baseUsername.slice(0, 20)}_${counter}`;
+        counter++;
+      }
+
+      user = await User.create({
+        email: normalizedEmail,
+        username,
+        googleId,
+        authProvider: "google",
+        profilePicUrl: picture,
+        role: assignedRole,
+      });
+
+      isNewUser = true;
+    } else {
+      // Existing user: link Google ID if not yet linked
+      let shouldSave = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        shouldSave = true;
+      }
+      if (!user.profilePicUrl && picture) {
+        user.profilePicUrl = picture;
+        shouldSave = true;
+      }
+      if (shouldSave) {
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    // Check if user has completed mandatory profile setup
+    let hasProfile = false;
+    if (user.role === "patient") {
+      hasProfile = Boolean(await Patient.exists({ userId: user._id }));
+    } else if (user.role === "doctor") {
+      hasProfile = Boolean(await Doctor.exists({ userId: user._id }));
+    } else if (user.role === "admin") {
+      hasProfile = true;
+    }
+
+    // Generate JWT Access & Refresh tokens
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // Store hashed Refresh Token & Expiry
+    user.refreshtoken = await bcrypt.hash(refreshToken, 10);
+    user.refreshtokenexpiry = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS);
+    await user.save({ validateBeforeSave: false });
+
+    // Set tokens in Cookies & send response
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, {
+        ...cookieOptions,
+        maxAge: ACCESS_TOKEN_EXPIRY_MS,
+      })
+      .cookie("refreshToken", refreshToken, {
+        ...cookieOptions,
+        maxAge: REFRESH_TOKEN_EXPIRY_MS,
+      })
+      .json({
+        success: true,
+        message: isNewUser
+          ? "Account registered and logged in with Google successfully"
+          : "Logged in with Google successfully",
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+          profilePicUrl: user.profilePicUrl,
+        },
+        isNewUser,
+        needsProfileSetup: !hasProfile,
+      });
+  } catch (err) {
+    console.error("Error in googleAuth:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong during Google authentication",
       ...(process.env.NODE_ENV !== "production" && { error: err.message }),
     });
   }
