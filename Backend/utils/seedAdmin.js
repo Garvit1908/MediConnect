@@ -20,7 +20,7 @@ async function seedAdmin() {
       }
 
       if (adminPassword) {
-        user.password = await bcrypt.hash(adminPassword, 10);
+        user.password = adminPassword;
         user.authProvider = "local";
         updated = true;
       }
@@ -50,7 +50,7 @@ async function seedAdmin() {
     };
 
     if (adminPassword) {
-      adminPayload.password = await bcrypt.hash(adminPassword, 10);
+      adminPayload.password = adminPassword;
       adminPayload.authProvider = "local";
     } else {
 

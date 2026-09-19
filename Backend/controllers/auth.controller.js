@@ -226,7 +226,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const normalizedEmail = (email || "").toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
     if (!user) {
       return res.status(401).json({
