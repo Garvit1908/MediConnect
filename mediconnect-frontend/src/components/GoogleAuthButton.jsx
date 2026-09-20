@@ -12,6 +12,11 @@ export default function GoogleAuthButton({
   const [isGsiLoaded, setIsGsiLoaded] = useState(false);
   const toast = useToast();
 
+  const successRef = useRef(onSuccess);
+  const errorRef = useRef(onError);
+  successRef.current = onSuccess;
+  errorRef.current = onError;
+
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
@@ -47,11 +52,11 @@ export default function GoogleAuthButton({
         client_id: clientId,
         callback: (response) => {
           if (response?.credential) {
-            onSuccess?.(response.credential);
+            successRef.current?.(response.credential);
           } else {
             const err = "No credential received from Google.";
             console.error(err, response);
-            onError?.(err);
+            errorRef.current?.(err);
           }
         },
       });
@@ -69,9 +74,9 @@ export default function GoogleAuthButton({
       });
     } catch (err) {
       console.error("Error rendering Google Sign-In button:", err);
-      onError?.(err.message || "Failed to initialize Google Sign-In button");
+      errorRef.current?.(err.message || "Failed to initialize Google Sign-In button");
     }
-  }, [clientId, isGsiLoaded, text, width, onSuccess, onError]);
+  }, [clientId, isGsiLoaded, text, width]);
 
   const handleFallbackClick = () => {
     if (!clientId) {
