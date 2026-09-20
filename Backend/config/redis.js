@@ -1,9 +1,12 @@
-const redisUri = process.env.REDIS_URI || process.env.REDIS_URL;
+const rawUri = process.env.REDIS_URI || process.env.REDIS_URL;
+const redisUri = rawUri ? rawUri.trim().replace(/^['"]|['"]$/g, "") : null;
 
 let redisClient = null;
 let isRedisConnected = false;
 
-if (redisUri) {
+const isValidRedisUrl = redisUri && (redisUri.startsWith("redis://") || redisUri.startsWith("rediss://"));
+
+if (isValidRedisUrl) {
   try {
     const Redis = require("ioredis");
     redisClient = new Redis(redisUri, {
@@ -47,7 +50,7 @@ if (redisUri) {
     redisClient = null;
   }
 } else {
-  console.log("ℹ️ No REDIS_URI provided. App running with direct MongoDB queries (cache disabled).");
+  console.log("ℹ️ No active REDIS_URI configured. App running with direct MongoDB queries (cache disabled).");
 }
 
 module.exports = {
