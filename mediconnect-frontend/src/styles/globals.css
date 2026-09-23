@@ -743,6 +743,12 @@ textarea:focus {
   color: var(--pine);
 }
 
+.status-pill.status-reconnecting {
+  background: #FFFBEB;
+  border-color: #FCD34D;
+  color: #B45309;
+}
+
 .consultation-grid {
   display: grid;
   grid-template-columns: 1fr 380px;

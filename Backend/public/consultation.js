@@ -12,7 +12,22 @@ const rtcConfig = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:openrelay.metered.ca:80" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
 };
 
@@ -247,9 +262,9 @@ function initSocketConnection(token) {
 }
 
 function createPeerConnection() {
-  if (peerConnection) return;
+  if (peerConnection && peerConnection.signalingState !== "closed") return;
 
-  logTelemetry("Creating new RTCPeerConnection with STUN servers...", "info");
+  logTelemetry("Creating new RTCPeerConnection with STUN & TURN servers...", "info");
   peerConnection = new RTCPeerConnection(rtcConfig);
 
   if (localStream) {
@@ -263,8 +278,14 @@ function createPeerConnection() {
     logTelemetry("Received remote media stream track!", "success");
     if (event.streams && event.streams[0]) {
       remoteVideo.srcObject = event.streams[0];
-      remotePlaceholder.style.display = "none";
+    } else {
+      if (!remoteVideo.srcObject) {
+        remoteVideo.srcObject = new MediaStream();
+      }
+      remoteVideo.srcObject.addTrack(event.track);
     }
+    remotePlaceholder.style.display = "none";
+    remoteVideo.play().catch((e) => console.warn("Autoplay blocked:", e));
   };
 
   peerConnection.onicecandidate = (event) => {
@@ -283,7 +304,12 @@ function createPeerConnection() {
 
     if (state === "connected") {
       updateConnectionBadge("connected", "Encrypted P2P Active");
-    } else if (state === "disconnected" || state === "failed") {
+    } else if (state === "failed") {
+      updateConnectionBadge("disconnected", "Connection Failed (Retrying...)");
+      if (typeof peerConnection.restartIce === "function") {
+        peerConnection.restartIce();
+      }
+    } else if (state === "disconnected") {
       updateConnectionBadge("disconnected", `Connection ${state}`);
     }
   };

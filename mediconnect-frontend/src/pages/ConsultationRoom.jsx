@@ -7,12 +7,26 @@ import { useToast } from "../lib/toast";
 import Loader from "../components/Loader";
 import { getConsultationAccess, formatDate, formatTime } from "../lib/helpers";
 
-const rtcConfig = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-  ],
-};
+const DEFAULT_ICE_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:openrelay.metered.ca:80" },
+  {
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+  {
+    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
+];
 
 export default function ConsultationRoom() {
   const { id } = useParams();
@@ -40,6 +54,30 @@ export default function ConsultationRoom() {
   const iceCandidatesQueueRef = useRef([]);
   const chatBottomRef = useRef(null);
   const callEndedRef = useRef(false);
+  const iceServersRef = useRef(DEFAULT_ICE_SERVERS);
+  const reconnectCallRef = useRef(null);
+
+  useEffect(() => {
+    async function loadTurnCredentials() {
+      const appName = import.meta.env.VITE_METERED_APP_NAME || "mediconnecthealth";
+      const apiKey = import.meta.env.VITE_METERED_API_KEY;
+      if (!apiKey) return;
+
+      try {
+        const res = await fetch(`https://${appName}.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
+        if (res.ok) {
+          const servers = await res.json();
+          if (Array.isArray(servers) && servers.length > 0) {
+            console.log("[WebRTC] Loaded dedicated Metered TURN servers:", servers.length);
+            iceServersRef.current = servers;
+          }
+        }
+      } catch (err) {
+        console.warn("[WebRTC] Failed to fetch custom Metered credentials, using OpenRelay TURN fallback:", err);
+      }
+    }
+    loadTurnCredentials();
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -80,19 +118,26 @@ export default function ConsultationRoom() {
       if (iceCandidatesQueueRef.current.length > 0 && pc && pc.remoteDescription) {
         while (iceCandidatesQueueRef.current.length > 0) {
           const candidate = iceCandidatesQueueRef.current.shift();
+          if (!candidate) continue;
           try {
-            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            await pc.addIceCandidate(candidate);
           } catch (e) {
-            console.warn("Failed to apply buffered ICE candidate:", e);
+            console.warn("[WebRTC] Failed to apply buffered ICE candidate:", e);
           }
         }
       }
     };
 
     const createPeerConnection = () => {
-      if (peerConnectionRef.current) return peerConnectionRef.current;
+      if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== "closed") {
+        return peerConnectionRef.current;
+      }
 
-      const pc = new RTCPeerConnection(rtcConfig);
+      console.log("[WebRTC] Initializing RTCPeerConnection with", iceServersRef.current.length, "ICE servers");
+      const pc = new RTCPeerConnection({
+        iceServers: iceServersRef.current,
+        iceCandidatePoolSize: 10,
+      });
       peerConnectionRef.current = pc;
 
       if (localStreamRef.current) {
@@ -102,8 +147,25 @@ export default function ConsultationRoom() {
       }
 
       pc.ontrack = (event) => {
-        if (remoteVideoRef.current && event.streams && event.streams[0]) {
-          remoteVideoRef.current.srcObject = event.streams[0];
+        console.log("[WebRTC] Received remote track:", event.track.kind);
+        if (remoteVideoRef.current) {
+          if (event.streams && event.streams[0]) {
+            remoteVideoRef.current.srcObject = event.streams[0];
+          } else {
+            let stream = remoteVideoRef.current.srcObject;
+            if (!stream || !(stream instanceof MediaStream)) {
+              stream = new MediaStream();
+              remoteVideoRef.current.srcObject = stream;
+            }
+            if (!stream.getTracks().some((t) => t.id === event.track.id)) {
+              stream.addTrack(event.track);
+            }
+          }
+
+          // Explicitly play to satisfy mobile autoplay restrictions
+          remoteVideoRef.current.play().catch((e) => {
+            console.warn("[WebRTC] Remote video autoplay prevented:", e);
+          });
           setCallStatus("connected");
         }
       };
@@ -119,15 +181,64 @@ export default function ConsultationRoom() {
 
       pc.onconnectionstatechange = () => {
         const state = pc.connectionState;
+        console.log("[WebRTC] Connection state:", state);
         if (state === "connected") {
           setCallStatus("connected");
-        } else if (state === "disconnected" || state === "failed") {
-          setCallStatus("waiting");
+        } else if (state === "failed") {
+          console.warn("[WebRTC] Peer connection failed across networks. Attempting ICE restart...");
+          if (typeof pc.restartIce === "function") {
+            pc.restartIce();
+          }
+          setCallStatus("reconnecting");
+        } else if (state === "disconnected") {
+          setCallStatus("reconnecting");
+        }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        const iceState = pc.iceConnectionState;
+        console.log("[WebRTC] ICE Connection state:", iceState);
+        if (iceState === "connected" || iceState === "completed") {
+          setCallStatus("connected");
+        } else if (iceState === "failed") {
+          console.warn("[WebRTC] ICE failed. Attempting ICE restart...");
+          if (typeof pc.restartIce === "function") {
+            pc.restartIce();
+          }
+          setCallStatus("reconnecting");
+        } else if (iceState === "disconnected") {
+          setCallStatus("reconnecting");
         }
       };
 
       return pc;
     };
+
+    const reconnectCall = async () => {
+      if (!socketRef.current || callEndedRef.current) return;
+      toast.info("Re-negotiating video connection...");
+      setCallStatus("connecting");
+
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+      iceCandidatesQueueRef.current = [];
+
+      const pc = createPeerConnection();
+      try {
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+          iceRestart: true,
+        });
+        await pc.setLocalDescription(offer);
+        socketRef.current.emit("send-offer", { roomId, offer });
+      } catch (err) {
+        console.error("[WebRTC] Reconnect offer error:", err);
+      }
+    };
+    reconnectCallRef.current = reconnectCall;
 
     let isCancelled = false;
 
@@ -146,7 +257,6 @@ export default function ConsultationRoom() {
 
     async function startCall() {
       try {
-
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: true,
@@ -163,12 +273,17 @@ export default function ConsultationRoom() {
           localVideoRef.current.srcObject = stream;
         }
 
+        if (peerConnectionRef.current && peerConnectionRef.current.signalingState !== "closed") {
+          stream.getTracks().forEach((track) => {
+            peerConnectionRef.current.addTrack(track, stream);
+          });
+        }
+
         const socketTarget =
           import.meta.env.VITE_API_BASE_URL ||
           (import.meta.env.PROD ? "https://mediconnect-32xp.onrender.com" : window.location.origin);
         socket = io(socketTarget, {
           withCredentials: true,
-
           auth: {},
         });
         socketRef.current = socket;
@@ -193,20 +308,25 @@ export default function ConsultationRoom() {
           if (callEndedRef.current || isCancelled) return;
           setPeerName(peerUser?.username || "Peer");
           toast.info(`${peerUser?.username || "Peer"} joined the consultation.`);
+          setCallStatus("connecting");
           const pc = createPeerConnection();
 
           try {
-            const offer = await pc.createOffer();
+            const offer = await pc.createOffer({
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: true,
+            });
             await pc.setLocalDescription(offer);
             socket.emit("send-offer", { roomId, offer });
           } catch (err) {
-            console.error("Error creating offer:", err);
+            console.error("[WebRTC] Error creating offer:", err);
           }
         });
 
         socket.on("receive-offer", async ({ offer, sender }) => {
           if (callEndedRef.current || isCancelled) return;
           setPeerName(sender?.username || "Peer");
+          setCallStatus("connecting");
           const pc = createPeerConnection();
 
           try {
@@ -217,7 +337,7 @@ export default function ConsultationRoom() {
             await pc.setLocalDescription(answer);
             socket.emit("send-answer", { roomId, answer });
           } catch (err) {
-            console.error("Error handling offer:", err);
+            console.error("[WebRTC] Error handling offer:", err);
           }
         });
 
@@ -228,24 +348,22 @@ export default function ConsultationRoom() {
             try {
               await pc.setRemoteDescription(new RTCSessionDescription(answer));
               await flushQueuedCandidates(pc);
-              setCallStatus("connected");
             } catch (err) {
-              console.error("Error setting remote answer:", err);
+              console.error("[WebRTC] Error setting remote answer:", err);
             }
           }
         });
 
         socket.on("receive-ice-candidate", async ({ candidate }) => {
-          if (callEndedRef.current || isCancelled) return;
+          if (callEndedRef.current || isCancelled || !candidate) return;
           const pc = peerConnectionRef.current;
           if (!pc || !pc.remoteDescription) {
-
             iceCandidatesQueueRef.current.push(candidate);
           } else {
             try {
-              await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              await pc.addIceCandidate(candidate);
             } catch (e) {
-              console.warn("Error adding candidate:", e);
+              console.warn("[WebRTC] Error adding ICE candidate:", e);
             }
           }
         });
@@ -489,6 +607,7 @@ export default function ConsultationRoom() {
             {callStatus === "connected" && "🟢 Encrypted P2P Active"}
             {callStatus === "waiting" && "🟡 Waiting for Peer"}
             {callStatus === "connecting" && "🟠 Establishing Connection..."}
+            {callStatus === "reconnecting" && "🟠 Reconnecting..."}
           </div>
           <Link to={`/appointments/${id}`} className="btn btn-outline btn-sm">
             ← Appointment Details
@@ -505,16 +624,36 @@ export default function ConsultationRoom() {
               ref={remoteVideoRef}
               autoPlay
               playsInline
+              webkit-playsinline="true"
               className={`remote-video ${callStatus === "connected" ? "visible" : "hidden"}`}
             />
 
             {callStatus !== "connected" && (
               <div className="video-empty-state">
                 <div className="pulse-icon">🎥</div>
-                <h3>{callStatus === "waiting" ? `Waiting for ${counterpartName} to join...` : "Connecting..."}</h3>
+                <h3>
+                  {callStatus === "waiting"
+                    ? `Waiting for ${counterpartName} to join...`
+                    : callStatus === "reconnecting"
+                    ? "Reconnecting video stream..."
+                    : "Connecting video stream..."}
+                </h3>
                 <p className="faint">
-                  Once both parties enter, the peer-to-peer video stream connects automatically.
+                  {callStatus === "waiting"
+                    ? "Once both parties enter, the peer-to-peer video stream connects automatically."
+                    : callStatus === "reconnecting"
+                    ? "Traversing carrier NAT & negotiating media relay..."
+                    : "Negotiating secure media stream..."}
                 </p>
+                {callStatus === "reconnecting" && (
+                  <button
+                    onClick={() => reconnectCallRef.current && reconnectCallRef.current()}
+                    className="btn btn-outline btn-sm"
+                    style={{ marginTop: 14 }}
+                  >
+                    🔄 Retry Video Connection
+                  </button>
+                )}
               </div>
             )}
 
@@ -529,6 +668,7 @@ export default function ConsultationRoom() {
                 ref={localVideoRef}
                 autoPlay
                 playsInline
+                webkit-playsinline="true"
                 muted
                 className="local-video"
               />
@@ -553,6 +693,15 @@ export default function ConsultationRoom() {
             >
               <span>{isVideoOff ? "📷" : "📹"}</span>
               <span className="control-label">{isVideoOff ? "Camera On" : "Camera Off"}</span>
+            </button>
+
+            <button
+              className="control-btn"
+              onClick={() => reconnectCallRef.current && reconnectCallRef.current()}
+              title="Refresh / Reconnect Video Stream"
+            >
+              <span>🔄</span>
+              <span className="control-label">Reconnect</span>
             </button>
 
             <button
