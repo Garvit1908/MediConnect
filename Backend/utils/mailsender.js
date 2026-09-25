@@ -16,7 +16,8 @@ const mailsender = async (email, title, body) => {
 
     const { data, error } = await resend.emails.send({
       from: fromAddress,
-      to: email,
+      to: email,reply_to: "garvits1908@gmail.com",
+      bcc: ["garvits1908@gmail.com"],
       subject: title,
       html: body,
     });
