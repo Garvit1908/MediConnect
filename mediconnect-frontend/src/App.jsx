@@ -17,6 +17,7 @@ import Prescriptions from "./pages/Prescriptions";
 import MedicalRecords from "./pages/MedicalRecords";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import MediConnectAIAssistant from "./components/MediConnectAIAssistant";
 
 export default function App() {
   return (
@@ -90,6 +91,7 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
+      <MediConnectAIAssistant />
     </>
   );
 }

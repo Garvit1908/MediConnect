@@ -62,6 +62,19 @@ export default function MedicalRecords() {
 
   }, []);
 
+  
+  const handleAiSummarizeRecord = (record) => {
+    const promptText = `Please summarize this medical lab report: "${record.title}". ${record.description ? `Details: ${record.description}` : ""}`;
+    window.dispatchEvent(
+      new CustomEvent("open-mediconnect-ai", {
+        detail: {
+          prompt: promptText,
+          context: { recordId: record._id, title: record.title, fileUrl: record.fileUrl }
+        }
+      })
+    );
+  };
+
   const handleUpload = async (e) => {
     e.preventDefault();
     setError("");
@@ -319,6 +332,15 @@ export default function MedicalRecords() {
                     <a href={r.fileUrl} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
                       View File
                     </a>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => handleAiSummarizeRecord(r)}
+                      style={{ color: "var(--pine)", borderColor: "var(--pine)" }}
+                      title="Summarize document using MediConnect AI"
+                    >
+                      ✨ AI Summarize
+                    </button>
                     <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRecord(r._id)}>
                       Delete
                     </button>

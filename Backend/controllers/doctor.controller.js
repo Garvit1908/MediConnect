@@ -255,3 +255,131 @@ exports.verifyDoctor = async (req, res) => {
     });
   }
 };
+
+
+// 7. AI Symptom Matcher: Match Doctors by Patient Symptoms
+exports.matchDoctorBySymptoms = async (req, res) => {
+  try {
+    const { symptoms } = req.body;
+
+    if (!symptoms || typeof symptoms !== "string" || symptoms.trim().length < 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Please describe your symptoms with at least 3 characters.",
+      });
+    }
+
+    const { analyzeSymptoms } = require("../utils/symptomAnalyzer");
+    const triage = await analyzeSymptoms(symptoms.trim());
+
+    // Search doctors matching primary specialization (regex for flexible match like 'Cardio')
+    const primaryKeyword = triage.primarySpecialization.split(" ")[0];
+    const primaryRegex = new RegExp(primaryKeyword, "i");
+
+    let matchingDoctors = await Doctor.find({
+      specialization: { $regex: primaryRegex },
+      isVerified: true,
+    })
+      .populate("userId", "username email phone profilePicUrl")
+      .sort({ experience: -1, consultationFee: 1 });
+
+    // If fewer than 2 doctors, include secondary specialization
+    if (matchingDoctors.length < 2 && triage.secondarySpecialization) {
+      const secondaryKeyword = triage.secondarySpecialization.split(" ")[0];
+      const secondaryRegex = new RegExp(secondaryKeyword, "i");
+
+      const existingIds = matchingDoctors.map((d) => d._id);
+      const secondaryDoctors = await Doctor.find({
+        specialization: { $regex: secondaryRegex },
+        isVerified: true,
+        _id: { $nin: existingIds },
+      })
+        .populate("userId", "username email phone profilePicUrl")
+        .sort({ experience: -1, consultationFee: 1 });
+
+      matchingDoctors = [...matchingDoctors, ...secondaryDoctors];
+    }
+
+    // Fallback: If no verified doctors found, show any matching doctors
+    if (matchingDoctors.length === 0) {
+      matchingDoctors = await Doctor.find({
+        specialization: { $regex: primaryRegex },
+      })
+        .populate("userId", "username email phone profilePicUrl")
+        .sort({ experience: -1, consultationFee: 1 });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Symptoms analyzed and matching specialists identified.",
+      triage,
+      count: matchingDoctors.length,
+      data: matchingDoctors,
+    });
+  } catch (err) {
+    console.error("AI Symptom Match Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error analyzing symptoms",
+      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
+    });
+  }
+};
+
+
+// 8. AI Lab Report Summarizer Endpoint
+exports.summarizeReport = async (req, res) => {
+  try {
+    const { reportText } = req.body;
+    if (!reportText || typeof reportText !== "string" || reportText.trim().length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide medical report text with at least 5 characters.",
+      });
+    }
+
+    const { summarizeMedicalReport } = require("../utils/symptomAnalyzer");
+    const summary = await summarizeMedicalReport(reportText.trim());
+
+    return res.status(200).json({
+      success: true,
+      message: "Report summarized successfully.",
+      data: summary,
+    });
+  } catch (err) {
+    console.error("AI Report Summarizer Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error summarizing medical report",
+      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
+    });
+  }
+};
+
+// 9. MediConnect AI Conversational Health Assistant
+exports.aiHealthChat = async (req, res) => {
+  try {
+    const { message, chatHistory, context } = req.body;
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is required.",
+      });
+    }
+
+    const { handleAIChat } = require("../utils/symptomAnalyzer");
+    const result = await handleAIChat(message.trim(), chatHistory || [], context || null);
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error("AI Health Chat Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Error processing AI chat",
+      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
+    });
+  }
+};

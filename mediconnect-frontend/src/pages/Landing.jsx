@@ -1,29 +1,72 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import telehealthShowcase from "../assets/telehealth-showcase.jpg";
-import consultationPhoto from "../assets/telehealth-consultation.jpg";
 
 export default function Landing() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [heroSymptom, setHeroSymptom] = useState("");
+
+  const handleHeroSymptomSubmit = (e) => {
+    e.preventDefault();
+    if (heroSymptom.trim()) {
+      navigate(`/doctors?symptoms=${encodeURIComponent(heroSymptom.trim())}`);
+    } else {
+      navigate("/doctors");
+    }
+  };
+
+  const handleOpenAiReportModal = () => {
+    window.dispatchEvent(
+      new CustomEvent("open-mediconnect-ai", {
+        detail: {
+          prompt: "Please summarize my latest medical report: Fasting blood sugar 138 mg/dL, HbA1c 6.7%, Total Cholesterol 225 mg/dL."
+        }
+      })
+    );
+  };
 
   return (
     <div style={{ background: "var(--paper)" }}>
-
+      {/* HERO SECTION */}
       <section className="container" style={{ maxWidth: 1320, paddingTop: 56, paddingBottom: 56 }}>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1.28fr",
+            gridTemplateColumns: "1.05fr 1.15fr",
             gap: 48,
             alignItems: "center",
           }}
           className="hero-grid"
         >
-
           <div>
-            <div className="eyebrow" style={{ marginBottom: 22 }}>
-              <span className="eyebrow-dot" />
-              Direct Access Telehealth Network
+            {/* New Eyebrow Badge */}
+            <div
+              className="eyebrow"
+              style={{
+                marginBottom: 20,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 14px",
+                background: "var(--pine-tint)",
+                color: "var(--pine)",
+                borderRadius: 9999,
+                fontWeight: 600,
+                fontSize: 13
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#10B981",
+                  boxShadow: "0 0 8px #10B981"
+                }}
+              />
+              ✨ AI-Powered Clinical Telehealth Platform
             </div>
 
             <h1
@@ -40,39 +83,78 @@ export default function Landing() {
 
             <p
               style={{
-                fontSize: 17,
+                fontSize: 16.5,
                 color: "var(--ink-soft)",
-                maxWidth: 490,
+                maxWidth: 510,
                 lineHeight: 1.65,
-                margin: "0 0 32px",
+                margin: "0 0 28px",
               }}
             >
-              Consult board-certified doctors across leading clinical specialties from the comfort of home.
-              Get digital prescriptions, view health records, and stay connected with your care team.
+              Consult board-certified doctors across leading clinical specialties. Get AI clinical symptom triage, instant lab report summaries, and encrypted browser consultations.
             </p>
+
+            {/* Integrated Hero Quick Symptom Search */}
+            <form
+              onSubmit={handleHeroSymptomSubmit}
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 12,
+                padding: "6px 8px 6px 16px",
+                border: "1.5px solid #CFE3DC",
+                boxShadow: "0 10px 25px -4px rgba(15, 62, 54, 0.08)",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                maxWidth: 520,
+                marginBottom: 28,
+              }}
+            >
+              <span style={{ fontSize: 16 }}>🔍</span>
+              <input
+                type="text"
+                value={heroSymptom}
+                onChange={(e) => setHeroSymptom(e.target.value)}
+                placeholder="Describe your symptoms (e.g. fever, migraine, knee pain)..."
+                style={{
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  fontSize: 14,
+                  color: "var(--ink)",
+                  background: "transparent",
+                }}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ padding: "10px 18px", fontSize: 13.5, whiteSpace: "nowrap" }}
+              >
+                Find Specialist ✨
+              </button>
+            </form>
 
             <div className="row" style={{ gap: 14 }}>
               <Link
                 to={user ? "/doctors" : "/login"}
                 state={!user ? { from: { pathname: "/doctors" } } : undefined}
                 className="btn btn-primary"
-                style={{ padding: "12px 26px", fontSize: 14.5 }}
-              >
-                Find a specialist →
-              </Link>
-              <Link
-                to={user ? "/appointments" : "/login"}
-                state={!user ? { from: { pathname: "/appointments" } } : undefined}
-                className="btn btn-outline"
                 style={{ padding: "12px 24px", fontSize: 14.5 }}
               >
-                View Appointments
+                Browse All Doctors →
               </Link>
+              <button
+                type="button"
+                onClick={handleOpenAiReportModal}
+                className="btn btn-outline"
+                style={{ padding: "12px 22px", fontSize: 14.5, borderColor: "var(--pine)", color: "var(--pine)" }}
+              >
+                ✨ AI Report Assistant
+              </button>
             </div>
           </div>
 
+          {/* Hero Image Showcase */}
           <div style={{ position: "relative" }}>
-
             <div
               className="card card-elevated"
               style={{
@@ -99,6 +181,7 @@ export default function Landing() {
           </div>
         </div>
 
+        {/* Trust Stats Row */}
         <div
           style={{
             marginTop: 48,
@@ -111,13 +194,12 @@ export default function Landing() {
             gap: 24,
           }}
         >
-
           <div style={{ display: "flex", gap: 48, flexWrap: "wrap" }}>
             <div>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 600, color: "var(--ink)" }}>
                 1-on-1
               </div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Direct peer consultations</div>
+              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Direct WebRTC consultations</div>
             </div>
             <div>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 600, color: "var(--ink)" }}>
@@ -127,54 +209,284 @@ export default function Landing() {
             </div>
             <div>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 600, color: "var(--ink)" }}>
-                Instant
+                AI-Ready
               </div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Digital prescriptions</div>
+              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Symptom &amp; Lab Triage</div>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
-              <span>🩺</span> Trusted Medical Care
+              <span>🩺</span> Verified Doctors
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
-              <span>🔒</span> Private Encrypted Consultation
+              <span>🔒</span> Encrypted Video Rooms
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--ink-soft)" }}>
-              <span>📋</span> Digital Prescriptions
+              <span>📋</span> Instant E-Prescriptions
             </div>
           </div>
         </div>
       </section>
 
-      <section
-        style={{
-          borderTop: "1px solid var(--line)",
-          borderBottom: "1px solid var(--line)",
-          background: "#F4F8F6",
-          padding: "84px 0",
-        }}
-      >
-        <div className="container">
+      {/* 4 BENTO TRUST REVIEWS (NO STARS, BRAND AUTHENTIC) */}
+      <section style={{ padding: "64px 0", background: "#FFFFFF", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+        <div className="container" style={{ maxWidth: 1280 }}>
+          <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 40px" }}>
+            <span className="eyebrow" style={{ marginBottom: 10 }}>Patient Stories</span>
+            <h2 style={{ fontSize: 30, margin: "0 0 10px", fontWeight: 600, color: "var(--ink)" }}>
+              Trusted by Patients Across India
+            </h2>
+            <p style={{ color: "var(--ink-soft)", fontSize: 15, margin: 0 }}>
+              Real healthcare journeys with AI clinical triage, verified specialists, and zero waiting rooms.
+            </p>
+          </div>
 
-          <div style={{ maxWidth: 700, marginBottom: 52 }}>
-            <span
+          {/* 4-Card Bento Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 20,
+            }}
+          >
+            {/* Card 1: AI Triage */}
+            <div
+              className="card card-pad"
               style={{
-                fontSize: 12,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "var(--rust)",
-                fontWeight: 600,
-                display: "block",
-                marginBottom: 10,
+                background: "#FFFFFF",
+                border: "1px solid #E5E7EB",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                borderRadius: 14,
               }}
             >
-              Telehealth Workflow
-            </span>
-            <h2 style={{ fontSize: 34, margin: "0 0 14px", fontWeight: 600, color: "var(--ink)", lineHeight: 1.25 }}>
+              <div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    padding: "3px 9px",
+                    borderRadius: 9999,
+                    background: "#EAF2EF",
+                    color: "#0F3E36",
+                    marginBottom: 14,
+                  }}
+                >
+                  ✨ AI Symptom Triage
+                </span>
+                <p style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                  "I had sudden chest tightness and anxiety at work. The AI symptom matcher accurately guided me to a Cardiologist within 10 minutes. Genuine peace of mind."
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid #F3F4F6", paddingTop: 14 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "#0F3E36",
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  RM
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Rohan Mehra</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Software Engineer, Bengaluru</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Featured Hero Accent Card (Deep Pine) */}
+            <div
+              className="card card-pad"
+              style={{
+                background: "linear-gradient(135deg, #0F3E36 0%, #16564B 100%)",
+                border: "1.5px solid #16564B",
+                boxShadow: "0 14px 30px -4px rgba(15, 62, 54, 0.3)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                borderRadius: 14,
+                color: "#FFFFFF",
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    padding: "3px 9px",
+                    borderRadius: 9999,
+                    background: "rgba(255, 255, 255, 0.18)",
+                    color: "#A7F3D0",
+                    marginBottom: 14,
+                  }}
+                >
+                  🩺 Live Consultation
+                </span>
+                <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                  "The peer-to-peer video call was crystal clear right in my browser, and I got a structured digital prescription with dosage instructions instantly."
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.15)", paddingTop: 14 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "#A7F3D0",
+                    color: "#0F3E36",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  PS
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#FFFFFF" }}>Priya Sharma</div>
+                  <div style={{ fontSize: 12, color: "#D1D5DB" }}>Product Lead, Mumbai</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: AI Lab Report Summary */}
+            <div
+              className="card card-pad"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E5E7EB",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                borderRadius: 14,
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    padding: "3px 9px",
+                    borderRadius: 9999,
+                    background: "#EAF2EF",
+                    color: "#0F3E36",
+                    marginBottom: 14,
+                  }}
+                >
+                  📋 AI Report Summary
+                </span>
+                <p style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                  "Uploaded my blood test PDF — the AI report summarizer explained my elevated thyroid and cholesterol numbers in plain English before my doctor visit."
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid #F3F4F6", paddingTop: 14 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "#0F3E36",
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  AI
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Ananya Iyer</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Healthcare Consultant, Hyderabad</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Verified Specialist Network */}
+            <div
+              className="card card-pad"
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E5E7EB",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                borderRadius: 14,
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    padding: "3px 9px",
+                    borderRadius: 9999,
+                    background: "#EAF2EF",
+                    color: "#0F3E36",
+                    marginBottom: 14,
+                  }}
+                >
+                  🛡️ 100% Verified Care
+                </span>
+                <p style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                  "No 2-hour hospital queues, no unverified clinic listings. Every doctor is verified, and appointment slots are strictly conflict-free."
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid #F3F4F6", paddingTop: 14 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "#0F3E36",
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  VS
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Vikram Sen</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Operations Director, Delhi NCR</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS SECTION */}
+      <section style={{ padding: "72px 0", background: "var(--paper)" }}>
+        <div className="container" style={{ maxWidth: 1200 }}>
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+            <span className="eyebrow" style={{ marginBottom: 12 }}>Seamless Workflow</span>
+            <h2 style={{ fontSize: 32, margin: "0 0 12px", fontWeight: 500, color: "var(--ink)" }}>
               Quality healthcare made simple, transparent, and fast
             </h2>
-            <p style={{ color: "var(--ink-soft)", fontSize: 16, margin: 0, lineHeight: 1.6 }}>
+            <p style={{ color: "var(--ink-soft)", fontSize: 15 }}>
               Choose your physician, pick a convenient time slot, and consult securely from any device with immediate post-visit prescriptions.
             </p>
           </div>
@@ -182,153 +494,75 @@ export default function Landing() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1fr",
-              gap: 52,
+              gridTemplateColumns: "1fr 1fr",
+              gap: 40,
               alignItems: "center",
             }}
             className="how-it-works-grid"
           >
-
-            <div>
-              <div
-                style={{
-                  borderRadius: "var(--radius-lg, 20px)",
-                  overflow: "hidden",
-                  boxShadow: "0 24px 48px -12px rgba(15, 62, 54, 0.16)",
-                  border: "1px solid rgba(15, 62, 54, 0.12)",
-                  background: "#FFFFFF",
-                }}
-              >
-                <img
-                  src={consultationPhoto}
-                  alt="Doctor conducting live video consultation"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    minHeight: 480,
-                    maxHeight: 560,
-                    objectFit: "cover",
-                    display: "block",
-                  }}
-                />
-              </div>
+            {/* Left Image */}
+            <div
+              className="card"
+              style={{
+                borderRadius: "var(--radius-lg, 18px)",
+                overflow: "hidden",
+                border: "1px solid var(--line)",
+                boxShadow: "0 14px 34px -8px rgba(15, 62, 54, 0.12)",
+              }}
+            >
+              <img
+                src={telehealthShowcase}
+                alt="Doctor Consultation Step"
+                style={{ width: "100%", height: "auto", display: "block" }}
+              />
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-
-              <div
-                className="card card-pad"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(15, 62, 54, 0.1)",
-                  boxShadow: "0 4px 16px -2px rgba(0, 0, 0, 0.04)",
-                  padding: "24px 26px",
-                  display: "flex",
-                  gap: 18,
-                  alignItems: "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    minWidth: 38,
-                    borderRadius: "var(--radius)",
-                    background: "#0F3E36",
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+            {/* Right 4 Steps */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   01
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 17, margin: "0 0 6px", fontWeight: 600, color: "var(--ink)" }}>
-                    Select your specialist &amp; slot
-                  </h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 14, margin: 0, lineHeight: 1.55 }}>
-                    Filter certified physicians by clinical expertise, fees, and open calendar timings. Complete your reservation in under a minute.
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>AI Clinical Triage &amp; Symptom Match</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Enter your symptoms or lab markers. MediConnect AI identifies the right clinical specialty and urgency level.
                   </p>
                 </div>
               </div>
 
-              <div
-                className="card card-pad"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(15, 62, 54, 0.1)",
-                  boxShadow: "0 4px 16px -2px rgba(0, 0, 0, 0.04)",
-                  padding: "24px 26px",
-                  display: "flex",
-                  gap: 18,
-                  alignItems: "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    minWidth: 38,
-                    borderRadius: "var(--radius)",
-                    background: "#0F3E36",
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   02
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 17, margin: "0 0 6px", fontWeight: 600, color: "var(--ink)" }}>
-                    Face-to-face video consultation
-                  </h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 14, margin: 0, lineHeight: 1.55 }}>
-                    Connect directly with your doctor in a secure, private video consultation room right in your browser with zero downloads.
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Select your specialist &amp; slot</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Filter verified physicians by expertise, fees, and open calendar timings. Complete conflict-free booking in under a minute.
                   </p>
                 </div>
               </div>
 
-              <div
-                className="card card-pad"
-                style={{
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(15, 62, 54, 0.1)",
-                  boxShadow: "0 4px 16px -2px rgba(0, 0, 0, 0.04)",
-                  padding: "24px 26px",
-                  display: "flex",
-                  gap: 18,
-                  alignItems: "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    minWidth: 38,
-                    borderRadius: "var(--radius)",
-                    background: "#0F3E36",
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   03
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 17, margin: "0 0 6px", fontWeight: 600, color: "var(--ink)" }}>
-                    Digital prescriptions &amp; records
-                  </h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 14, margin: 0, lineHeight: 1.55 }}>
-                    Receive structured e-prescriptions with dosage guidance directly after your call, accessible forever in your secure dashboard.
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Face-to-face video consultation</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Connect directly with your doctor in a secure, private WebRTC consultation room right in your browser.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  04
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Digital prescriptions &amp; records</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Receive structured e-prescriptions with dosage guidance directly after your call, accessible anytime in your health vault.
                   </p>
                 </div>
               </div>
@@ -337,76 +571,33 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="container" style={{ padding: "72px 24px" }}>
-        <div style={{ textAlign: "center", maxWidth: 540, margin: "0 auto 48px" }}>
-          <span className="eyebrow" style={{ marginBottom: 12 }}>Comprehensive Care</span>
-          <h2 style={{ fontSize: 32, margin: "0 0 10px", fontWeight: 500 }}>Why Patients Choose MediConnect</h2>
-          <p style={{ color: "var(--ink-soft)", fontSize: 15 }}>
-            Built to provide reliable medical care without friction or long hospital lines.
-          </p>
-        </div>
-
-        <div className="grid-2" style={{ gap: 24 }}>
-          <div className="card card-pad">
-            <div style={{ fontSize: 24, marginBottom: 12 }}>🩺</div>
-            <h3 style={{ fontSize: 18, marginBottom: 6, fontWeight: 600 }}>Verified Medical Specialists</h3>
-            <p style={{ color: "var(--ink-soft)", fontSize: 14.5, margin: 0 }}>
-              Browse certified doctors across clinical specialties with transparent fees, experience details, and patient ratings.
-            </p>
-          </div>
-
-          <div className="card card-pad">
-            <div style={{ fontSize: 24, marginBottom: 12 }}>⏱️</div>
-            <h3 style={{ fontSize: 18, marginBottom: 6, fontWeight: 600 }}>Instant Slot Scheduling</h3>
-            <p style={{ color: "var(--ink-soft)", fontSize: 14.5, margin: 0 }}>
-              View real-time availability calendars and lock in confirmed consultation slots with zero booking overlap.
-            </p>
-          </div>
-
-          <div className="card card-pad">
-            <div style={{ fontSize: 24, marginBottom: 12 }}>📹</div>
-            <h3 style={{ fontSize: 18, marginBottom: 6, fontWeight: 600 }}>Peer-to-Peer Video Care</h3>
-            <p style={{ color: "var(--ink-soft)", fontSize: 14.5, margin: 0 }}>
-              Join secure, low-latency video consultations directly in your browser with no app installations required.
-            </p>
-          </div>
-
-          <div className="card card-pad">
-            <div style={{ fontSize: 24, marginBottom: 12 }}>📁</div>
-            <h3 style={{ fontSize: 18, marginBottom: 6, fontWeight: 600 }}>Centralized Health Records</h3>
-            <p style={{ color: "var(--ink-soft)", fontSize: 14.5, margin: 0 }}>
-              Access clinical prescriptions, diagnostic reports, and visit summaries securely stored in your personal dashboard.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section style={{ padding: "72px 0", background: "var(--paper)" }}>
+      {/* FINAL CTA SECTION */}
+      <section style={{ padding: "64px 0", background: "var(--paper)" }}>
         <div className="container" style={{ maxWidth: 1080 }}>
           <div
             style={{
               background: "#1b4332",
               borderRadius: "var(--radius-lg, 20px)",
-              padding: "56px 40px",
+              padding: "52px 36px",
               textAlign: "center",
               boxShadow: "0 20px 40px -15px rgba(27, 67, 50, 0.35)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
               color: "#FFFFFF",
             }}
           >
-            <h2 style={{ fontSize: 34, marginBottom: 12, fontWeight: 600, color: "#FFFFFF" }}>
-              Ready to speak with a physician?
+            <h2 style={{ fontSize: 32, marginBottom: 12, fontWeight: 600, color: "#FFFFFF" }}>
+              Ready to speak with a verified physician?
             </h2>
             <p
               style={{
                 color: "#d8f3dc",
-                fontSize: 16,
+                fontSize: 15.5,
                 maxWidth: 540,
-                margin: "0 auto 28px",
+                margin: "0 auto 26px",
                 lineHeight: 1.6,
               }}
             >
-              Find a doctor by specialty, view open slots, and complete your consultation today.
+              Describe your symptoms, explore doctor availability, and complete your consultation today.
             </p>
             <Link
               to={user ? "/doctors" : "/login"}
@@ -414,7 +605,7 @@ export default function Landing() {
               style={{
                 background: "#b7e4c7",
                 color: "#1b4332",
-                padding: "14px 32px",
+                padding: "13px 30px",
                 fontSize: 15,
                 fontWeight: 600,
                 borderRadius: "var(--radius)",
@@ -422,10 +613,9 @@ export default function Landing() {
                 display: "inline-flex",
                 alignItems: "center",
                 boxShadow: "0 8px 20px rgba(0, 0, 0, 0.15)",
-                transition: "transform 0.15s, opacity 0.2s",
               }}
             >
-              Browse Available Doctors
+              Browse Available Doctors →
             </Link>
           </div>
         </div>

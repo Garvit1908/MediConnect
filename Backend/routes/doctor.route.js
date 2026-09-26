@@ -19,6 +19,9 @@ router.put("/me", protect, authorize("doctor"), updateDoctorProfile);
 router.patch("/:id/verify", protect, authorize("admin"), verifyDoctor);
 
 router.get("/", getAllDoctors);
+router.post("/ai-symptom-match", matchDoctorBySymptoms);
+router.post("/ai-summarize-report", summarizeReport);
+router.post("/ai-chat", aiHealthChat);
 router.get("/:id", getDoctorById);
 
 module.exports = router;

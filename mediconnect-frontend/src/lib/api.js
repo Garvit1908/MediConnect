@@ -81,6 +81,9 @@ export const api = {
   createDoctorProfile: (payload) => request("/doctors", { method: "POST", body: payload }),
   updateDoctorProfile: (payload) => request("/doctors/me", { method: "PUT", body: payload }),
   getDoctors: (queryString) => request(`/doctors${queryString ? `?${queryString}` : ""}`),
+  matchDoctorBySymptoms: (symptoms) => request("/doctors/ai-symptom-match", { method: "POST", body: { symptoms } }),
+  summarizeMedicalReport: (reportText) => request("/doctors/ai-summarize-report", { method: "POST", body: { reportText } }),
+  aiHealthChat: (message, chatHistory, context) => request("/doctors/ai-chat", { method: "POST", body: { message, chatHistory, context } }),
   getDoctorById: (id) => request(`/doctors/${id}`),
   verifyDoctor: (id, isVerified = true) =>
     request(`/doctors/${id}/verify`, { method: "PATCH", body: { isVerified } }),
