@@ -8,6 +8,9 @@ const {
   getAllDoctors,
   getDoctorById,
   verifyDoctor,
+  matchDoctorBySymptoms,
+  summarizeReport,
+  aiHealthChat,
 } = require("../controllers/doctor.controller");
 
 const { protect, authorize } = require("../middleware/auth.middleware");
