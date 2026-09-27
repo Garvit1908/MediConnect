@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import telehealthShowcase from "../assets/telehealth-showcase.jpg";
+import telehealthDoctorImg from "../assets/telehealth-consultation-doctor.jpg";
+import clinicalCareTeamImg from "../assets/clinical-care-team.png";
 
 export default function Landing() {
   const { user } = useAuth();
@@ -230,7 +232,198 @@ export default function Landing() {
       </section>
 
       {/* 4 BENTO TRUST REVIEWS (NO STARS, BRAND AUTHENTIC) */}
-      <section style={{ padding: "64px 0", background: "#FFFFFF", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+            {/* ============================================================ */}
+      {/* OUR PROMISE SECTION (Inspired by clinical leadership showcase) */}
+      {/* ============================================================ */}
+      <section
+        style={{
+          padding: "70px 0",
+          background: "#FFFFFF",
+          borderTop: "1px solid var(--line)",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <div className="container">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 56,
+              alignItems: "center",
+            }}
+            className="our-promise-grid"
+          >
+            {/* Left: Stylized Diamond / Rounded Frame with Doctor & Nurse Team Photo */}
+            <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
+              {/* Soft decorative background accents */}
+              <div
+                style={{
+                  position: "absolute",
+                  width: 320,
+                  height: 320,
+                  background: "linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 62, 54, 0.08))",
+                  borderRadius: 36,
+                  transform: "rotate(45deg)",
+                  zIndex: 0,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  width: 140,
+                  height: 140,
+                  background: "rgba(167, 243, 208, 0.35)",
+                  borderRadius: 24,
+                  transform: "rotate(45deg) translate(-140px, -60px)",
+                  zIndex: 0,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  width: 100,
+                  height: 100,
+                  background: "rgba(15, 62, 54, 0.08)",
+                  borderRadius: 18,
+                  transform: "rotate(45deg) translate(140px, 120px)",
+                  zIndex: 0,
+                }}
+              />
+
+              {/* Main Image Container */}
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  width: "min(400px, 90%)",
+                  borderRadius: 28,
+                  overflow: "hidden",
+                  boxShadow: "0 24px 50px -12px rgba(15, 62, 54, 0.22), 0 4px 16px rgba(0, 0, 0, 0.06)",
+                  border: "4px solid #FFFFFF",
+                  background: "#F4F7F6",
+                }}
+              >
+                <img
+                  src={clinicalCareTeamImg}
+                  alt="Doctor and clinical care team collaboratively reviewing patient health record on digital tablet"
+                  style={{
+                    width: "100%",
+                    height: "auto",
+                    display: "block",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Right: Authentic Clinical Commitments */}
+            <div>
+              <span
+                style={{
+                  display: "inline-block",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "#0F3E36",
+                  background: "#EAF2EF",
+                  padding: "5px 12px",
+                  borderRadius: 9999,
+                  marginBottom: 16,
+                }}
+              >
+                OUR PROMISE
+              </span>
+
+              <h2
+                style={{
+                  fontSize: 32,
+                  lineHeight: 1.25,
+                  fontWeight: 600,
+                  color: "var(--ink)",
+                  margin: "0 0 28px",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Accessible, Intelligent Care Built Around You
+              </h2>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                {/* Promise Point 1 */}
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#10B981",
+                      marginTop: 7,
+                      flexShrink: 0,
+                      boxShadow: "0 0 8px rgba(16, 185, 129, 0.6)",
+                    }}
+                  />
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "0 0 4px" }}>
+                      Uncompromised Clinical Integrity
+                    </h3>
+                    <p style={{ fontSize: 14.5, color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 }}>
+                      Every physician on our platform is rigorously verified and credentialed, ensuring you and your family always receive genuine, evidence-based medical care — never rushed advice or unverified opinions.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Promise Point 2 */}
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#10B981",
+                      marginTop: 7,
+                      flexShrink: 0,
+                      boxShadow: "0 0 8px rgba(16, 185, 129, 0.6)",
+                    }}
+                  />
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "0 0 4px" }}>
+                      Healthcare That Never Leaves You Waiting
+                    </h3>
+                    <p style={{ fontSize: 14.5, color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 }}>
+                      Timely medical attention should never be out of reach. We break down geographic barriers and hospital queues so expert specialist care reaches you the moment symptoms strike.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Promise Point 3 */}
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#10B981",
+                      marginTop: 7,
+                      flexShrink: 0,
+                      boxShadow: "0 0 8px rgba(16, 185, 129, 0.6)",
+                    }}
+                  />
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", margin: "0 0 4px" }}>
+                      Absolute Privacy &amp; Patient Dignity
+                    </h3>
+                    <p style={{ fontSize: 14.5, color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 }}>
+                      Your health journey belongs to you. Every video consultation, lab report, and medical record is protected with end-to-end encryption — remaining strictly confidential between you and your attending physician.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+<section style={{ padding: "64px 0", background: "#FFFFFF", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
         <div className="container" style={{ maxWidth: 1280 }}>
           <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 40px" }}>
             <span className="eyebrow" style={{ marginBottom: 10 }}>Patient Stories</span>
@@ -242,7 +435,7 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* 4-Card Bento Grid */}
+                    {/* 4-Card Bento Grid: Unified Deep Pine Green Theme */}
           <div
             style={{
               display: "grid",
@@ -254,64 +447,8 @@ export default function Landing() {
             <div
               className="card card-pad"
               style={{
-                background: "#FFFFFF",
-                border: "1px solid #E5E7EB",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                borderRadius: 14,
-              }}
-            >
-              <div>
-                <span
-                  style={{
-                    display: "inline-block",
-                    fontSize: 11.5,
-                    fontWeight: 600,
-                    padding: "3px 9px",
-                    borderRadius: 9999,
-                    background: "#EAF2EF",
-                    color: "#0F3E36",
-                    marginBottom: 14,
-                  }}
-                >
-                  ✨ AI Symptom Triage
-                </span>
-                <p style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
-                  "I had sudden chest tightness and anxiety at work. The AI symptom matcher accurately guided me to a Cardiologist within 10 minutes. Genuine peace of mind."
-                </p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid #F3F4F6", paddingTop: 14 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background: "#0F3E36",
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    fontSize: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  RM
-                </div>
-                <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Rohan Mehra</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Software Engineer, Bengaluru</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Featured Hero Accent Card (Deep Pine) */}
-            <div
-              className="card card-pad"
-              style={{
                 background: "linear-gradient(135deg, #0F3E36 0%, #16564B 100%)",
-                border: "1.5px solid #16564B",
+                border: "1.5px solid rgba(255, 255, 255, 0.12)",
                 boxShadow: "0 14px 30px -4px rgba(15, 62, 54, 0.3)",
                 display: "flex",
                 flexDirection: "column",
@@ -333,47 +470,107 @@ export default function Landing() {
                     marginBottom: 14,
                   }}
                 >
-                  🩺 Live Consultation
+                  ✨ AI Symptom Triage
                 </span>
                 <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
-                  "The peer-to-peer video call was crystal clear right in my browser, and I got a structured digital prescription with dosage instructions instantly."
+                  "I had sudden chest tightness and anxiety at work. The AI symptom matcher accurately guided me to a Cardiologist within 10 minutes. Genuine peace of mind."
                 </p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.15)", paddingTop: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.12)", paddingTop: 14 }}>
                 <div
                   style={{
                     width: 36,
                     height: 36,
                     borderRadius: "50%",
-                    background: "#A7F3D0",
-                    color: "#0F3E36",
+                    background: "rgba(255, 255, 255, 0.2)",
+                    color: "#FFFFFF",
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 13,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                  }}
+                >
+                  RM
+                </div>
+                <div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#FFFFFF" }}>Rohan Mehra</div>
+                  <div style={{ fontSize: 12, color: "#A7F3D0" }}>Software Engineer, Bengaluru</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Live Consultation */}
+            <div
+              className="card card-pad"
+              style={{
+                background: "linear-gradient(135deg, #0F3E36 0%, #16564B 100%)",
+                border: "1.5px solid rgba(255, 255, 255, 0.12)",
+                boxShadow: "0 14px 30px -4px rgba(15, 62, 54, 0.3)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                borderRadius: 14,
+                color: "#FFFFFF",
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    padding: "3px 9px",
+                    borderRadius: 9999,
+                    background: "rgba(255, 255, 255, 0.18)",
+                    color: "#A7F3D0",
+                    marginBottom: 14,
+                  }}
+                >
+                  📹 Live Consultation
+                </span>
+                <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                  "The peer-to-peer video call was crystal clear right in my browser, and I got a structured digital prescription with dosage instructions instantly."
+                </p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.12)", paddingTop: 14 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.2)",
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
                   }}
                 >
                   PS
                 </div>
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 700, color: "#FFFFFF" }}>Priya Sharma</div>
-                  <div style={{ fontSize: 12, color: "#D1D5DB" }}>Product Lead, Mumbai</div>
+                  <div style={{ fontSize: 12, color: "#A7F3D0" }}>Product Lead, Mumbai</div>
                 </div>
               </div>
             </div>
 
-            {/* Card 3: AI Lab Report Summary */}
+            {/* Card 3: AI Report Summary */}
             <div
               className="card card-pad"
               style={{
-                background: "#FFFFFF",
-                border: "1px solid #E5E7EB",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                background: "linear-gradient(135deg, #0F3E36 0%, #16564B 100%)",
+                border: "1.5px solid rgba(255, 255, 255, 0.12)",
+                boxShadow: "0 14px 30px -4px rgba(15, 62, 54, 0.3)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
                 borderRadius: 14,
+                color: "#FFFFFF",
               }}
             >
               <div>
@@ -384,52 +581,54 @@ export default function Landing() {
                     fontWeight: 600,
                     padding: "3px 9px",
                     borderRadius: 9999,
-                    background: "#EAF2EF",
-                    color: "#0F3E36",
+                    background: "rgba(255, 255, 255, 0.18)",
+                    color: "#A7F3D0",
                     marginBottom: 14,
                   }}
                 >
                   📋 AI Report Summary
                 </span>
-                <p style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
                   "Uploaded my blood test PDF — the AI report summarizer explained my elevated thyroid and cholesterol numbers in plain English before my doctor visit."
                 </p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid #F3F4F6", paddingTop: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.12)", paddingTop: 14 }}>
                 <div
                   style={{
                     width: 36,
                     height: 36,
                     borderRadius: "50%",
-                    background: "#0F3E36",
+                    background: "rgba(255, 255, 255, 0.2)",
                     color: "#FFFFFF",
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 13,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
                   }}
                 >
                   AI
                 </div>
                 <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Ananya Iyer</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Healthcare Consultant, Hyderabad</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#FFFFFF" }}>Ananya Iyer</div>
+                  <div style={{ fontSize: 12, color: "#A7F3D0" }}>Healthcare Consultant, Hyderabad</div>
                 </div>
               </div>
             </div>
 
-            {/* Card 4: Verified Specialist Network */}
+            {/* Card 4: 100% Verified Care */}
             <div
               className="card card-pad"
               style={{
-                background: "#FFFFFF",
-                border: "1px solid #E5E7EB",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+                background: "linear-gradient(135deg, #0F3E36 0%, #16564B 100%)",
+                border: "1.5px solid rgba(255, 255, 255, 0.12)",
+                boxShadow: "0 14px 30px -4px rgba(15, 62, 54, 0.3)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
                 borderRadius: 14,
+                color: "#FFFFFF",
               }}
             >
               <div>
@@ -440,37 +639,38 @@ export default function Landing() {
                     fontWeight: 600,
                     padding: "3px 9px",
                     borderRadius: 9999,
-                    background: "#EAF2EF",
-                    color: "#0F3E36",
+                    background: "rgba(255, 255, 255, 0.18)",
+                    color: "#A7F3D0",
                     marginBottom: 14,
                   }}
                 >
                   🛡️ 100% Verified Care
                 </span>
-                <p style={{ fontSize: 14.5, color: "var(--ink)", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
+                <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
                   "No 2-hour hospital queues, no unverified clinic listings. Every doctor is verified, and appointment slots are strictly conflict-free."
                 </p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid #F3F4F6", paddingTop: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.12)", paddingTop: 14 }}>
                 <div
                   style={{
                     width: 36,
                     height: 36,
                     borderRadius: "50%",
-                    background: "#0F3E36",
+                    background: "rgba(255, 255, 255, 0.2)",
                     color: "#FFFFFF",
                     fontWeight: 700,
-                    fontSize: 14,
+                    fontSize: 13,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
                   }}
                 >
                   VS
                 </div>
                 <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--ink)" }}>Vikram Sen</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>Operations Director, Delhi NCR</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#FFFFFF" }}>Vikram Sen</div>
+                  <div style={{ fontSize: 12, color: "#A7F3D0" }}>Operations Director, Delhi NCR</div>
                 </div>
               </div>
             </div>
@@ -500,20 +700,21 @@ export default function Landing() {
             }}
             className="how-it-works-grid"
           >
-            {/* Left Image */}
+            {/* Left Image: Real Doctor Telehealth Consultation */}
             <div
               className="card"
               style={{
                 borderRadius: "var(--radius-lg, 18px)",
                 overflow: "hidden",
                 border: "1px solid var(--line)",
-                boxShadow: "0 14px 34px -8px rgba(15, 62, 54, 0.12)",
+                boxShadow: "0 18px 40px -10px rgba(15, 62, 54, 0.18)",
+                background: "#0F3E36",
               }}
             >
               <img
-                src={telehealthShowcase}
-                alt="Doctor Consultation Step"
-                style={{ width: "100%", height: "auto", display: "block" }}
+                src={telehealthDoctorImg}
+                alt="Doctor Conducting Real-Time Telehealth Video Consultation"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               />
             </div>
 
