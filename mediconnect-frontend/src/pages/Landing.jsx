@@ -231,15 +231,115 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 4 BENTO TRUST REVIEWS (NO STARS, BRAND AUTHENTIC) */}
-            {/* ============================================================ */}
-      {/* OUR PROMISE SECTION (Inspired by clinical leadership showcase) */}
+      {/* ============================================================ */}
+      {/* 1. HOW IT WORKS / STEPS SECTION (First after Hero) */}
       {/* ============================================================ */}
       <section
         style={{
-          padding: "70px 0",
+          padding: "80px 0",
           background: "#FFFFFF",
-          borderTop: "1px solid var(--line)",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <div className="container">
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+            <span className="eyebrow" style={{ marginBottom: 12 }}>How MediConnect Works</span>
+            <h2 style={{ fontSize: 32, margin: "0 0 12px", fontWeight: 600, color: "var(--ink)" }}>
+              Quality healthcare made simple, transparent, and fast
+            </h2>
+            <p style={{ color: "var(--ink-soft)", fontSize: 15 }}>
+              Choose your physician, pick a convenient time slot, and consult securely from any device with immediate post-visit prescriptions.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 40,
+              alignItems: "center",
+            }}
+            className="how-it-works-grid"
+          >
+            {/* Left Image: Real Doctor Telehealth Consultation */}
+            <div
+              className="card"
+              style={{
+                borderRadius: "var(--radius-lg, 18px)",
+                overflow: "hidden",
+                border: "1px solid var(--line)",
+                boxShadow: "0 18px 40px -10px rgba(15, 62, 54, 0.18)",
+                background: "#0F3E36",
+              }}
+            >
+              <img
+                src={telehealthDoctorImg}
+                alt="Doctor Conducting Real-Time Telehealth Video Consultation"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            </div>
+
+            {/* Right 4 Steps */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  01
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>AI Clinical Triage &amp; Symptom Match</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Enter your symptoms or lab markers. MediConnect AI identifies the right clinical specialty and urgency level.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  02
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Select your specialist &amp; slot</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Filter verified physicians by expertise, fees, and open calendar timings. Complete conflict-free booking in under a minute.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  03
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Face-to-face video consultation</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Connect directly with your doctor in a secure, private WebRTC consultation room right in your browser.
+                  </p>
+                </div>
+              </div>
+
+              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  04
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Digital prescriptions &amp; records</h3>
+                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
+                    Receive structured e-prescriptions with dosage guidance directly after your call, accessible anytime in your health vault.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 2. OUR PROMISE SECTION (Middle Section) */}
+      {/* ============================================================ */}
+      <section
+        style={{
+          padding: "80px 0",
+          background: "#FBFDFB",
           borderBottom: "1px solid var(--line)",
         }}
       >
@@ -423,8 +523,17 @@ export default function Landing() {
         </div>
       </section>
 
-<section style={{ padding: "64px 0", background: "#FFFFFF", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
-        <div className="container" style={{ maxWidth: 1280 }}>
+      {/* ============================================================ */}
+      {/* 3. PATIENT STORIES / 4 GREEN BENTO CARDS (Last before CTA) */}
+      {/* ============================================================ */}
+      <section
+        style={{
+          padding: "80px 0",
+          background: "#FFFFFF",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <div className="container">
           <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 40px" }}>
             <span className="eyebrow" style={{ marginBottom: 10 }}>Patient Stories</span>
             <h2 style={{ fontSize: 30, margin: "0 0 10px", fontWeight: 600, color: "var(--ink)" }}>
@@ -435,7 +544,7 @@ export default function Landing() {
             </p>
           </div>
 
-                    {/* 4-Card Bento Grid: Unified Deep Pine Green Theme */}
+          {/* 4-Card Bento Grid: Unified Deep Pine Green Theme */}
           <div
             style={{
               display: "grid",
@@ -678,102 +787,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* HOW IT WORKS SECTION */}
-      <section style={{ padding: "72px 0", background: "var(--paper)" }}>
-        <div className="container" style={{ maxWidth: 1200 }}>
-          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
-            <span className="eyebrow" style={{ marginBottom: 12 }}>Seamless Workflow</span>
-            <h2 style={{ fontSize: 32, margin: "0 0 12px", fontWeight: 500, color: "var(--ink)" }}>
-              Quality healthcare made simple, transparent, and fast
-            </h2>
-            <p style={{ color: "var(--ink-soft)", fontSize: 15 }}>
-              Choose your physician, pick a convenient time slot, and consult securely from any device with immediate post-visit prescriptions.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 40,
-              alignItems: "center",
-            }}
-            className="how-it-works-grid"
-          >
-            {/* Left Image: Real Doctor Telehealth Consultation */}
-            <div
-              className="card"
-              style={{
-                borderRadius: "var(--radius-lg, 18px)",
-                overflow: "hidden",
-                border: "1px solid var(--line)",
-                boxShadow: "0 18px 40px -10px rgba(15, 62, 54, 0.18)",
-                background: "#0F3E36",
-              }}
-            >
-              <img
-                src={telehealthDoctorImg}
-                alt="Doctor Conducting Real-Time Telehealth Video Consultation"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              />
-            </div>
-
-            {/* Right 4 Steps */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  01
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>AI Clinical Triage &amp; Symptom Match</h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-                    Enter your symptoms or lab markers. MediConnect AI identifies the right clinical specialty and urgency level.
-                  </p>
-                </div>
-              </div>
-
-              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  02
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Select your specialist &amp; slot</h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-                    Filter verified physicians by expertise, fees, and open calendar timings. Complete conflict-free booking in under a minute.
-                  </p>
-                </div>
-              </div>
-
-              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  03
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Face-to-face video consultation</h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-                    Connect directly with your doctor in a secure, private WebRTC consultation room right in your browser.
-                  </p>
-                </div>
-              </div>
-
-              <div className="card card-pad" style={{ background: "#FFFFFF", border: "1px solid rgba(15,62,54,0.1)", display: "flex", gap: 16, alignItems: "flex-start" }}>
-                <div style={{ width: 34, height: 34, minWidth: 34, borderRadius: "var(--radius)", background: "#0F3E36", color: "#FFFFFF", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  04
-                </div>
-                <div>
-                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Digital prescriptions &amp; records</h3>
-                  <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-                    Receive structured e-prescriptions with dosage guidance directly after your call, accessible anytime in your health vault.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FINAL CTA SECTION */}
-      <section style={{ padding: "64px 0", background: "var(--paper)" }}>
+<section style={{ padding: "64px 0", background: "var(--paper)" }}>
         <div className="container" style={{ maxWidth: 1080 }}>
           <div
             style={{
