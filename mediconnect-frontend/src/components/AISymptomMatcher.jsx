@@ -300,25 +300,7 @@ export default function AISymptomMatcher({ onMatchResults, onClearResults, activ
             </div>
           )}
 
-          {activeTriage.recommendedQuestions && activeTriage.recommendedQuestions.length > 0 && (
-            <div
-              style={{
-                background: "var(--paper-soft)",
-                borderRadius: 6,
-                padding: "10px 14px",
-                marginBottom: 10
-              }}
-            >
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--pine)", marginBottom: 4 }}>
-                Suggested questions for your consultation:
-              </div>
-              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "var(--ink-soft)", lineHeight: 1.5 }}>
-                {activeTriage.recommendedQuestions.map((q, idx) => (
-                  <li key={idx}>{q}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          
 
           <div style={{ fontSize: 11, color: "var(--ink-faint)", fontStyle: "italic", borderTop: "1px solid #F3F4F6", paddingTop: 8 }}>
             Disclaimer: {activeTriage.disclaimer || "MediConnect AI is an assistive triage tool and does not provide formal medical diagnosis."}
