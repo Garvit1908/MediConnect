@@ -203,7 +203,7 @@ const LAB_REFERENCE_DATABASE = [
     lowFlag: "Hyperthyroidism (overactive thyroid).",
     highFlag: "Hypothyroidism (underactive thyroid, causing fatigue, sluggish metabolism).",
     specialist: "General Physician"
-  }
+  },
   // LIVER FUNCTION TEST (LFT)
   {
     parameter: "Bilirubin (Total)",

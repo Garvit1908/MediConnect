@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Doctor = require("../models/doctor.model");
+const User = require("../models/user.model");
 const { getOrSetCache, deleteCache, invalidateCachePattern } = require("../utils/cache");
 
 exports.createDoctorProfile = async (req, res) => {
@@ -307,6 +308,18 @@ exports.matchDoctorBySymptoms = async (req, res) => {
       })
         .populate("userId", "username email phone profilePicUrl")
         .sort({ experience: -1, consultationFee: 1 });
+    }
+
+    // Safety fallback: if no specialist in DB yet, show available verified doctors
+    if (matchingDoctors.length === 0) {
+      matchingDoctors = await Doctor.find({ isVerified: true })
+        .populate("userId", "username email phone profilePicUrl")
+        .limit(6);
+    }
+    if (matchingDoctors.length === 0) {
+      matchingDoctors = await Doctor.find({})
+        .populate("userId", "username email phone profilePicUrl")
+        .limit(6);
     }
 
     return res.status(200).json({
