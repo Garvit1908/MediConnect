@@ -8,26 +8,6 @@ import clinicalCareTeamImg from "../assets/clinical-care-team.png";
 export default function Landing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [heroSymptom, setHeroSymptom] = useState("");
-
-  const handleHeroSymptomSubmit = (e) => {
-    e.preventDefault();
-    if (heroSymptom.trim()) {
-      navigate(`/doctors?symptoms=${encodeURIComponent(heroSymptom.trim())}`);
-    } else {
-      navigate("/doctors");
-    }
-  };
-
-  const handleOpenAiReportModal = () => {
-    window.dispatchEvent(
-      new CustomEvent("open-mediconnect-ai", {
-        detail: {
-          prompt: "Please summarize my latest medical report: Fasting blood sugar 138 mg/dL, HbA1c 6.7%, Total Cholesterol 225 mg/dL."
-        }
-      })
-    );
-  };
 
   return (
     <div style={{ background: "var(--paper)" }}>
@@ -68,7 +48,7 @@ export default function Landing() {
                   boxShadow: "0 0 8px #10B981"
                 }}
               />
-              ✨ AI-Powered Clinical Telehealth Platform
+              ✨ Premium Clinical Telehealth Platform
             </div>
 
             <h1
@@ -92,66 +72,25 @@ export default function Landing() {
                 margin: "0 0 28px",
               }}
             >
-              Consult board-certified doctors across leading clinical specialties. Get AI clinical symptom triage, instant lab report summaries, and encrypted browser consultations.
+              Consult board-certified doctors across leading clinical specialties. Get instant conflict-free slot booking, digital prescriptions, and encrypted browser consultations.
             </p>
-
-            {/* Integrated Hero Quick Symptom Search */}
-            <form
-              onSubmit={handleHeroSymptomSubmit}
-              style={{
-                background: "#FFFFFF",
-                borderRadius: 12,
-                padding: "6px 8px 6px 16px",
-                border: "1.5px solid #CFE3DC",
-                boxShadow: "0 10px 25px -4px rgba(15, 62, 54, 0.08)",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                maxWidth: 520,
-                marginBottom: 28,
-              }}
-            >
-              <span style={{ fontSize: 16 }}>🔍</span>
-              <input
-                type="text"
-                value={heroSymptom}
-                onChange={(e) => setHeroSymptom(e.target.value)}
-                placeholder="Describe your symptoms (e.g. fever, migraine, knee pain)..."
-                style={{
-                  flex: 1,
-                  border: "none",
-                  outline: "none",
-                  fontSize: 14,
-                  color: "var(--ink)",
-                  background: "transparent",
-                }}
-              />
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ padding: "10px 18px", fontSize: 13.5, whiteSpace: "nowrap" }}
-              >
-                Find Specialist ✨
-              </button>
-            </form>
 
             <div className="row" style={{ gap: 14 }}>
               <Link
                 to={user ? "/doctors" : "/login"}
                 state={!user ? { from: { pathname: "/doctors" } } : undefined}
                 className="btn btn-primary"
-                style={{ padding: "12px 24px", fontSize: 14.5 }}
+                style={{ padding: "12px 26px", fontSize: 14.5 }}
               >
                 Browse All Doctors →
               </Link>
-              <button
-                type="button"
-                onClick={handleOpenAiReportModal}
+              <Link
+                to={user ? "/appointments" : "/signup"}
                 className="btn btn-outline"
                 style={{ padding: "12px 22px", fontSize: 14.5, borderColor: "var(--pine)", color: "var(--pine)" }}
               >
-                ✨ AI Report Assistant
-              </button>
+                Book Consultation
+              </Link>
             </div>
           </div>
 
@@ -211,9 +150,9 @@ export default function Landing() {
             </div>
             <div>
               <div style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 600, color: "var(--ink)" }}>
-                AI-Ready
+                10+
               </div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Symptom &amp; Lab Triage</div>
+              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Clinical Specialties</div>
             </div>
           </div>
 
@@ -286,9 +225,9 @@ export default function Landing() {
                   01
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>AI Clinical Triage &amp; Symptom Match</h3>
+                  <h3 style={{ fontSize: 16, margin: "0 0 4px", fontWeight: 600, color: "var(--ink)" }}>Discover Verified Specialists</h3>
                   <p style={{ color: "var(--ink-soft)", fontSize: 13.5, margin: 0, lineHeight: 1.5 }}>
-                    Enter your symptoms or lab markers. MediConnect AI identifies the right clinical specialty and urgency level.
+                    Filter board-certified doctors across 10+ clinical specialties by fees, experience, and verified credentials.
                   </p>
                 </div>
               </div>
@@ -540,7 +479,7 @@ export default function Landing() {
               Trusted by Patients Across India
             </h2>
             <p style={{ color: "var(--ink-soft)", fontSize: 15, margin: 0 }}>
-              Real healthcare journeys with AI clinical triage, verified specialists, and zero waiting rooms.
+              Real healthcare journeys with verified specialists, instant prescriptions, and zero waiting rooms.
             </p>
           </div>
 
@@ -552,7 +491,7 @@ export default function Landing() {
               gap: 20,
             }}
           >
-            {/* Card 1: AI Triage */}
+            {/* Card 1: AI Symptom Triage */}
             <div
               className="card card-pad"
               style={{
@@ -582,7 +521,7 @@ export default function Landing() {
                   ✨ AI Symptom Triage
                 </span>
                 <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
-                  "I had sudden chest tightness and anxiety at work. The AI symptom matcher accurately guided me to a Cardiologist within 10 minutes. Genuine peace of mind."
+                  "I described my sudden chest tightness and fatigue, and MediConnect's AI instantly recommended a Cardiologist with verified slots. Genuine peace of mind."
                 </p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.12)", paddingTop: 14 }}>
@@ -668,7 +607,7 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Card 3: AI Report Summary */}
+            {/* Card 3: Digital Health Records */}
             <div
               className="card card-pad"
               style={{
@@ -695,10 +634,10 @@ export default function Landing() {
                     marginBottom: 14,
                   }}
                 >
-                  📋 AI Report Summary
+                  📋 Digital Health Records
                 </span>
                 <p style={{ fontSize: 14.5, color: "#FFFFFF", lineHeight: 1.6, fontStyle: "italic", margin: "0 0 20px" }}>
-                  "Uploaded my blood test PDF — the AI report summarizer explained my elevated thyroid and cholesterol numbers in plain English before my doctor visit."
+                  "Uploaded my past prescriptions and lab reports — my attending doctor could review my entire clinical history securely before prescribing."
                 </p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 12, borderTop: "1px solid rgba(255, 255, 255, 0.12)", paddingTop: 14 }}>
@@ -812,7 +751,7 @@ export default function Landing() {
                 lineHeight: 1.6,
               }}
             >
-              Describe your symptoms, explore doctor availability, and complete your consultation today.
+              Explore doctor availability, book conflict-free consultation slots, and speak with a specialist today.
             </p>
             <Link
               to={user ? "/doctors" : "/login"}

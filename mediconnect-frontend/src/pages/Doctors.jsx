@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { api } from "../lib/api";
 import DoctorCard from "../components/DoctorCard";
-import AISymptomMatcher from "../components/AISymptomMatcher";
 import Loader from "../components/Loader";
 import EmptyState from "../components/EmptyState";
 import { useToast } from "../lib/toast";
@@ -10,12 +8,14 @@ import { useToast } from "../lib/toast";
 export default function Doctors() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [symptomQuery, setSymptomQuery] = useState("");
   const [filters, setFilters] = useState({ specialization: "", maxFee: "", minExp: "" });
-  const [activeTriage, setActiveTriage] = useState(null);
-  const [isAiFiltered, setIsAiFiltered] = useState(false);
+
+  // AI Symptom Matcher states
+  const [symptomsInput, setSymptomsInput] = useState("");
+  const [matchingAi, setMatchingAi] = useState(false);
+  const [triageResult, setTriageResult] = useState(null);
+
   const toast = useToast();
-  const location = useLocation();
 
   const fetchDoctors = async (f = filters) => {
     setLoading(true);
@@ -26,8 +26,6 @@ export default function Doctors() {
       if (f.minExp) params.set("minExp", f.minExp);
       const res = await api.getDoctors(params.toString());
       setDoctors(res.data || []);
-      setIsAiFiltered(false);
-      setActiveTriage(null);
     } catch (err) {
       toast.error(err.message || "Could not load doctors.");
     } finally {
@@ -36,60 +34,55 @@ export default function Doctors() {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const symptomsFromUrl = params.get("symptoms");
-    if (symptomsFromUrl) {
-      setSymptomQuery(symptomsFromUrl);
-      handleSymptomSearch(symptomsFromUrl);
-    } else {
-      fetchDoctors();
-    }
+    fetchDoctors();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, []);
 
   const handleFilter = (e) => {
     e.preventDefault();
-    if (symptomQuery.trim()) {
-      handleSymptomSearch(symptomQuery);
-    } else {
-      fetchDoctors(filters);
-    }
+    setTriageResult(null); // Clear AI badge when using manual filters
+    fetchDoctors(filters);
   };
 
-  const handleSymptomSearch = async (text) => {
-    const q = (text || symptomQuery).trim();
-    if (!q) {
-      fetchDoctors(filters);
+  // AI Symptom Search Handler
+  const handleAiMatch = async (e) => {
+    e.preventDefault();
+    if (!symptomsInput.trim()) {
+      toast.error("Please describe your symptoms first.");
       return;
     }
-    setLoading(true);
+
+    setMatchingAi(true);
     try {
-      const res = await api.matchDoctorBySymptoms(q);
-      if (res.success) {
-        setDoctors(res.data || []);
-        setActiveTriage(res.triage);
-        setIsAiFiltered(true);
-        toast.success("Found " + (res.data?.length || 0) + " doctors matching your symptoms!");
-      }
+      const res = await api.matchDoctorBySymptoms(symptomsInput.trim());
+      setTriageResult(res.triage);
+      setDoctors(res.data || []);
+      toast.success(`Matched with ${res.triage.specialization}`);
     } catch (err) {
-      toast.error(err.message || "Could not match symptoms.");
-      fetchDoctors(filters);
+      toast.error(err.message || "Failed to analyze symptoms.");
     } finally {
-      setLoading(false);
+      setMatchingAi(false);
     }
   };
 
-  const handleAiMatchResults = (matchedDoctors, triage) => {
-    setDoctors(matchedDoctors || []);
-    setActiveTriage(triage);
-    setIsAiFiltered(true);
+  // Clear AI triage and restore all doctors
+  const handleResetAi = () => {
+    setTriageResult(null);
+    setSymptomsInput("");
+    fetchDoctors();
   };
 
-  const handleClearAiResults = () => {
-    setSymptomQuery("");
-    setActiveTriage(null);
-    setIsAiFiltered(false);
-    fetchDoctors(filters);
+  // Urgency badge helper
+  const getUrgencyBadgeClass = (urgency) => {
+    switch (urgency?.toLowerCase()) {
+      case "urgent":
+      case "emergency":
+        return "badge-red";
+      case "moderate":
+        return "badge-amber";
+      default:
+        return "badge-teal";
+    }
   };
 
   return (
@@ -98,53 +91,96 @@ export default function Doctors() {
         <div>
           <span className="eyebrow">Directory</span>
           <h1 style={{ fontSize: 30, margin: "10px 0 0" }}>Find a Doctor</h1>
+          <p style={{ color: "var(--ink-soft)", margin: "6px 0 0", fontSize: 14 }}>
+            Describe your symptoms to let AI recommend the right specialist, or use manual filters.
+          </p>
         </div>
       </div>
 
-      {/* AI Symptom Matcher Assistant */}
-      <AISymptomMatcher
-        onMatchResults={handleAiMatchResults}
-        onClearResults={handleClearAiResults}
-        activeTriage={activeTriage}
-        isSearchingAll={!isAiFiltered}
-      />
-
-      {/* Integrated Search & Filter Form */}
-      <form onSubmit={handleFilter} className="card card-pad" style={{ marginBottom: 28 }}>
-        {/* Full-width symptom search bar */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink)", marginBottom: 6, display: "block" }}>
-            Search by Symptoms
-          </label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              type="text"
-              value={symptomQuery}
-              onChange={(e) => setSymptomQuery(e.target.value)}
-              placeholder="Enter your symptoms to find consultant (e.g., chest tightness, skin rash, persistent migraine)..."
-              style={{
-                flex: 1,
-                padding: "11px 14px",
-                borderRadius: 8,
-                border: "1.5px solid #CBD5E1",
-                fontSize: 14,
-                fontFamily: "var(--font-body)"
-              }}
-            />
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => handleSymptomSearch(symptomQuery)}
-              style={{ whiteSpace: "nowrap", padding: "10px 20px" }}
-            >
-              Find Consultant ✨
-            </button>
-          </div>
+      {/* 🌟 AI Symptom Matcher Card */}
+      <div
+        className="card card-pad"
+        style={{
+          marginBottom: 20,
+          background: "linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 100%)",
+          borderColor: "rgba(15, 62, 54, 0.2)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 20 }}>✨</span>
+          <h3 style={{ fontSize: 16, margin: 0, color: "var(--pine)" }}>
+            AI Specialist Recommendation
+          </h3>
+          <span className="badge badge-rust" style={{ fontSize: 11 }}>Gemini Powered</span>
         </div>
 
-        <div style={{ height: 1, background: "var(--line)", margin: "16px 0" }} />
+        <form onSubmit={handleAiMatch} style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input
+            type="text"
+            className="input"
+            style={{ flex: "1 1 300px", padding: "10px 14px", borderRadius: "var(--radius)" }}
+            placeholder="e.g., severe migraine with light sensitivity for 2 days, chest discomfort..."
+            value={symptomsInput}
+            onChange={(e) => setSymptomsInput(e.target.value)}
+            disabled={matchingAi}
+          />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={matchingAi || !symptomsInput.trim()}
+            style={{ minWidth: 140 }}
+          >
+            {matchingAi ? "Analyzing..." : "Find Specialist"}
+          </button>
+          {triageResult && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={handleResetAi}
+              title="Clear AI recommendations"
+            >
+              Reset AI
+            </button>
+          )}
+        </form>
 
-        {/* Standard Criteria Row */}
+        {/* 🩺 AI Triage Result Display */}
+        {triageResult && (
+          <div
+            style={{
+              marginTop: 16,
+              padding: "14px 18px",
+              background: "#FFFFFF",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+                  Recommended Specialist:
+                </span>
+                <span className="badge badge-rust" style={{ fontSize: 13, fontWeight: 600 }}>
+                  {triageResult.specialization}
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>Urgency:</span>
+                <span className={`badge ${getUrgencyBadgeClass(triageResult.urgency)}`}>
+                  {triageResult.urgency?.toUpperCase()}
+                </span>
+              </div>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.5 }}>
+              <strong style={{ color: "var(--ink)" }}>Clinical Reasoning: </strong>
+              {triageResult.reasoning}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* 🔍 Standard Manual Filters */}
+      <form onSubmit={handleFilter} className="card card-pad" style={{ marginBottom: 28 }}>
         <div className="field-row">
           <div className="field" style={{ marginBottom: 0 }}>
             <label>Specialization</label>
@@ -193,16 +229,13 @@ export default function Doctors() {
             <button className="btn btn-primary btn-block" type="submit">
               Filter
             </button>
-            {(filters.specialization || filters.maxFee || filters.minExp || isAiFiltered || symptomQuery) && (
+            {(filters.specialization || filters.maxFee || filters.minExp) && (
               <button
                 type="button"
                 className="btn btn-ghost"
                 onClick={() => {
-                  setSymptomQuery("");
                   const empty = { specialization: "", maxFee: "", minExp: "" };
                   setFilters(empty);
-                  setActiveTriage(null);
-                  setIsAiFiltered(false);
                   fetchDoctors(empty);
                 }}
                 title="Reset All Filters"
@@ -217,21 +250,10 @@ export default function Doctors() {
       {/* Doctor Listings Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <h2 style={{ fontSize: 18, margin: 0, color: "var(--ink)" }}>
-          {isAiFiltered && activeTriage ? (
-            <>
-              Recommended {activeTriage.primarySpecialization} Specialists{" "}
-              <span style={{ fontSize: 14, color: "var(--ink-soft)", fontWeight: 400 }}>
-                ({doctors.length} available)
-              </span>
-            </>
-          ) : (
-            <>
-              Available Doctors{" "}
-              <span style={{ fontSize: 14, color: "var(--ink-soft)", fontWeight: 400 }}>
-                ({doctors.length})
-              </span>
-            </>
-          )}
+          {triageResult ? `Matching ${triageResult.specialization}s` : "Available Doctors"}{" "}
+          <span style={{ fontSize: 14, color: "var(--ink-soft)", fontWeight: 400 }}>
+            ({doctors.length})
+          </span>
         </h2>
       </div>
 
@@ -239,8 +261,8 @@ export default function Doctors() {
         <Loader label="Fetching doctors" />
       ) : doctors.length === 0 ? (
         <EmptyState
-          title={isAiFiltered ? "No doctors found for this symptom profile" : "No doctors match those filters"}
-          hint={isAiFiltered ? "Try widening your symptom keywords or consult a General Physician." : "Try widening your search."}
+          title="No doctors match those criteria"
+          hint="Try searching different symptoms or widening your filters."
         />
       ) : (
         <div className="grid-3">

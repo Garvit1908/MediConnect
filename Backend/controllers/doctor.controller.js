@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 const Doctor = require("../models/doctor.model");
 const User = require("../models/user.model");
-const { getOrSetCache, deleteCache, invalidateCachePattern } = require("../utils/cache");
+const { findmatch } = require("../utils/aiService");
+
 
 exports.createDoctorProfile = async (req, res) => {
   try {
@@ -36,8 +37,6 @@ exports.createDoctorProfile = async (req, res) => {
       consultationFee,
       availability: availability || [],
     });
-
-    await invalidateCachePattern("doctors:*");
 
     return res.status(201).json({
       success: true,
@@ -112,9 +111,6 @@ exports.updateDoctorProfile = async (req, res) => {
       });
     }
 
-    await invalidateCachePattern("doctors:list:*");
-    await deleteCache(`doctors:detail:${updatedDoctor._id}`);
-
     return res.status(200).json({
       success: true,
       message: "Doctor profile updated successfully",
@@ -144,18 +140,10 @@ exports.getAllDoctors = async (req, res) => {
       filter.experience = { $gte: Number(minExp) };
     }
 
-    const cacheKey = `doctors:list:${JSON.stringify({
-      specialization: specialization ? specialization.toLowerCase().trim() : "",
-      maxFee: maxFee || "",
-      minExp: minExp || "",
-    })}`;
-
-    const doctors = await getOrSetCache(cacheKey, 600, async () => {
-      return await Doctor.find(filter).populate(
-        "userId",
-        "username email phone profilePicUrl"
-      );
-    });
+    const doctors = await Doctor.find(filter).populate(
+      "userId",
+      "username email phone profilePicUrl"
+    );
 
     return res.status(200).json({
       success: true,
@@ -182,14 +170,10 @@ exports.getDoctorById = async (req, res) => {
       });
     }
 
-    const cacheKey = `doctors:detail:${id}`;
-
-    const doctorData = await getOrSetCache(cacheKey, 600, async () => {
-      return await Doctor.findById(id).populate(
-        "userId",
-        "username email phone profilePicUrl"
-      );
-    });
+    const doctorData = await Doctor.findById(id).populate(
+      "userId",
+      "username email phone profilePicUrl"
+    );
 
     if (!doctorData) {
       return res.status(404).json({
@@ -258,141 +242,53 @@ exports.verifyDoctor = async (req, res) => {
 };
 
 
-// 7. AI Symptom Matcher: Match Doctors by Patient Symptoms
 exports.matchDoctorBySymptoms = async (req, res) => {
   try {
     const { symptoms } = req.body;
 
-    if (!symptoms || typeof symptoms !== "string" || symptoms.trim().length < 3) {
+    if (!symptoms || typeof symptoms !== "string" || !symptoms.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Please describe your symptoms with at least 3 characters.",
+        message: "Please describe your symptoms",
       });
     }
 
-    const { analyzeSymptoms } = require("../utils/symptomAnalyzer");
-    const triage = await analyzeSymptoms(symptoms.trim());
+    // 1. AI analyzes symptoms & returns { specialization, urgency, reasoning }
+    const triage = await findmatch(symptoms.trim());
 
-    // Search doctors matching primary specialization (regex for flexible match like 'Cardio')
-    const primaryKeyword = triage.primarySpecialization.split(" ")[0];
-    const primaryRegex = new RegExp(primaryKeyword, "i");
-
-    let matchingDoctors = await Doctor.find({
-      specialization: { $regex: primaryRegex },
+    // 2. Query MongoDB for verified specialists in that field
+    let doctors = await Doctor.find({
+      specialization: triage.specialization,
       isVerified: true,
     })
       .populate("userId", "username email phone profilePicUrl")
       .sort({ experience: -1, consultationFee: 1 });
 
-    // If fewer than 2 doctors, include secondary specialization
-    if (matchingDoctors.length < 2 && triage.secondarySpecialization) {
-      const secondaryKeyword = triage.secondarySpecialization.split(" ")[0];
-      const secondaryRegex = new RegExp(secondaryKeyword, "i");
-
-      const existingIds = matchingDoctors.map((d) => d._id);
-      const secondaryDoctors = await Doctor.find({
-        specialization: { $regex: secondaryRegex },
-        isVerified: true,
-        _id: { $nin: existingIds },
-      })
-        .populate("userId", "username email phone profilePicUrl")
-        .sort({ experience: -1, consultationFee: 1 });
-
-      matchingDoctors = [...matchingDoctors, ...secondaryDoctors];
+    // Fallback A: Any doctor in that specialization if verified not available
+    if (doctors.length === 0) {
+      doctors = await Doctor.find({ specialization: triage.specialization })
+        .populate("userId", "username email phone profilePicUrl");
     }
 
-    // Fallback: If no verified doctors found, show any matching doctors
-    if (matchingDoctors.length === 0) {
-      matchingDoctors = await Doctor.find({
-        specialization: { $regex: primaryRegex },
-      })
-        .populate("userId", "username email phone profilePicUrl")
-        .sort({ experience: -1, consultationFee: 1 });
-    }
-
-    // Safety fallback: if no specialist in DB yet, show available verified doctors
-    if (matchingDoctors.length === 0) {
-      matchingDoctors = await Doctor.find({ isVerified: true })
-        .populate("userId", "username email phone profilePicUrl")
-        .limit(6);
-    }
-    if (matchingDoctors.length === 0) {
-      matchingDoctors = await Doctor.find({})
-        .populate("userId", "username email phone profilePicUrl")
-        .limit(6);
+    // Fallback B: Fallback to General Physician if no specialist found
+    if (doctors.length === 0) {
+      doctors = await Doctor.find({ specialization: "General Physician" })
+        .populate("userId", "username email phone profilePicUrl");
     }
 
     return res.status(200).json({
       success: true,
-      message: "Symptoms analyzed and matching specialists identified.",
+      message: "Doctors matched successfully",
       triage,
-      count: matchingDoctors.length,
-      data: matchingDoctors,
+      count: doctors.length,
+      data: doctors,
     });
   } catch (err) {
-    console.error("AI Symptom Match Error:", err);
+    console.error("Symptom match error:", err);
     return res.status(500).json({
       success: false,
-      message: "Error analyzing symptoms",
-      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
-    });
-  }
-};
-
-
-// 8. AI Lab Report Summarizer Endpoint
-exports.summarizeReport = async (req, res) => {
-  try {
-    const { reportText } = req.body;
-    if (!reportText || typeof reportText !== "string" || reportText.trim().length < 5) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide medical report text with at least 5 characters.",
-      });
-    }
-
-    const { summarizeMedicalReport } = require("../utils/symptomAnalyzer");
-    const summary = await summarizeMedicalReport(reportText.trim());
-
-    return res.status(200).json({
-      success: true,
-      message: "Report summarized successfully.",
-      data: summary,
-    });
-  } catch (err) {
-    console.error("AI Report Summarizer Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Error summarizing medical report",
-      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
-    });
-  }
-};
-
-// 9. MediConnect AI Conversational Health Assistant
-exports.aiHealthChat = async (req, res) => {
-  try {
-    const { message, chatHistory, context } = req.body;
-    if (!message || typeof message !== "string" || !message.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Message is required.",
-      });
-    }
-
-    const { handleAIChat } = require("../utils/symptomAnalyzer");
-    const result = await handleAIChat(message.trim(), chatHistory || [], context || null);
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
-  } catch (err) {
-    console.error("AI Health Chat Error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Error processing AI chat",
-      ...(process.env.NODE_ENV !== "production" && { error: err.message }),
+      message: "Error matching doctors with symptoms",
+      error: err.message,
     });
   }
 };

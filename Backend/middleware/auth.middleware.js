@@ -64,11 +64,6 @@ exports.requireSameOrigin = (req, res, next) => {
     "https://mediconnecthealth.me",
     "https://www.mediconnecthealth.me",
     "https://medi-connect-chi-five.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:4173",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
   ].filter(Boolean);
 
   const isAllowed =
