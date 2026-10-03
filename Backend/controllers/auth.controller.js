@@ -16,7 +16,10 @@ const getGoogleOAuthClient = () => {
       const { OAuth2Client } = require("google-auth-library");
       googleOAuthClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
     } catch {
-
+          console.error(
+                "Failed to initialize Google OAuth client:",
+              err.message
+        );
     }
   }
   return googleOAuthClient;
